@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "matrix_driver.h"
+extern IWDG_HandleTypeDef hiwdg;
 
 extern SPI_HandleTypeDef hspi1;
 
@@ -37,6 +38,8 @@ extern "C" int cpp_main(void) {
 	HAL_UART_Transmit(&huart1, (uint8_t *)buffer, strlen(buffer), 500);
 
 	matrix.SwapBuffer();
+
+	HAL_IWDG_Init(&hiwdg);
 
 	matrix.open();
 

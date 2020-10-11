@@ -7,6 +7,8 @@
 
 #include "main.h"
 #include "matrix_driver.h"
+#include <stdio.h>
+#include <string.h>
 
 #define R0_SHIFT 0
 #define G0_SHIFT 1
@@ -29,17 +31,15 @@ static MatrixDriver *instance;
 
 extern UART_HandleTypeDef huart1;
 
-void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim) {
-	HAL_UART_Transmit(&huart1, (uint8_t *) "TX\n", 3, 10);
+extern IWDG_HandleTypeDef hiwdg;
 
+void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim) {
 	//This will trigger DMA eventually
 	instance->SendPlanePixel();
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	//This will trigger clock pulse
-	HAL_UART_Transmit(&huart1, (uint8_t *) "CLK\n", 4, 10);
-
 	instance->Clock();
 }
 
@@ -161,7 +161,13 @@ void MatrixDriver::SwapBuffer() {
 	nextOffset = 0;
 }
 
+uint32_t cycles = 0;
+extern char buffer[1024];
+uint32_t latchTicks = 0;
+
 void MatrixDriver::SendPlanePixel() {
+	HAL_UART_Transmit(&huart1, (uint8_t *)"B\n", 2, 10);
+
 	uint16_t *buffer = sendBufferA ? bufferA : bufferB;
 
 	if((nextOffset % (width * planes)) == 0) {
@@ -170,15 +176,34 @@ void MatrixDriver::SendPlanePixel() {
 	}
 
 	GPIOB->ODR = (uint32_t) buffer[nextOffset++];
+
+	if(nextOffset >= bufferSize) {
+		nextOffset = 0;
+	}
 }
 
 void MatrixDriver::Clock() {
+	cycles++;
+
+	sprintf(buffer, "A: %lu\n", cycles);
+
+	HAL_UART_Transmit(&huart1, (uint8_t *)buffer, strlen(buffer), 10);
+
 	GPIOB->BSRR = (0x0001 << CLK_SHIFT);
 	//Clock will be cleared on next output
 }
 
 void MatrixDriver::Latch() {
-	HAL_UART_Transmit(&huart1, (uint8_t *) "LAT\n", 4, 10);
+	uint32_t now = HAL_GetTick();
+
+	uint32_t duration = now - latchTicks;
+	latchTicks = now;
+
+	sprintf(buffer, "LAT Duration: %lu\n", duration);
+
+	HAL_UART_Transmit(&huart1, (uint8_t *)buffer, strlen(buffer), 10);
+
+	HAL_IWDG_Refresh(&hiwdg);
 
 	//Disable output
 	GPIOB->BSRR = (0x0001 << OE_SHIFT);
