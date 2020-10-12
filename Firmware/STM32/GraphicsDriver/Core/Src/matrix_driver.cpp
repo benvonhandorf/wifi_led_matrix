@@ -12,7 +12,7 @@
 
 #define R0_SHIFT 0
 #define G0_SHIFT 1
-#define B0_SHIFT 2
+#define B0_SHIFT 15
 #define R1_SHIFT 8
 #define G1_SHIFT 9
 #define B1_SHIFT 10
@@ -33,19 +33,29 @@ extern UART_HandleTypeDef huart1;
 
 extern IWDG_HandleTypeDef hiwdg;
 
-void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim) {
-	//This will trigger DMA eventually
-	instance->SendPlanePixel();
-}
+extern DMA_HandleTypeDef hdma_memtomem_dma1_channel3;
+
+uint32_t cycles = 0;
+extern char buffer[1024];
+uint32_t latchTicks = 0;
+
+//void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim) {
+//	//This will trigger DMA eventually
+//	instance->SendPlanePixel();
+//}
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	//This will trigger clock pulse
 	instance->Clock();
 }
 
-uint16_t BufferOffset(uint8_t x, uint8_t y, uint8_t plane, uint8_t width, uint8_t planes) {
+//void DMA_Interrupt(DMA_HandleTypeDef *hdma) {
+//	if(hdma->State == )
+//}
+
+uint16_t MatrixDriver::BufferOffset(uint8_t x, uint8_t y, uint8_t plane) {
 	//TODO: Take plane into account for offset
-	return (y * width) + x;
+	return ((y % (height / 2))  * width) + x;
 }
 
 MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType,
@@ -55,27 +65,25 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType,
 	this->width = width;
 	this->height = height;
 	this->scanType = scanType;
-	this->elementPerPlanePixel = 1;
 	this->planes = 1;
 
-	this->bufferSize = (width * (height / 2) * elementPerPlanePixel * planes);
+	this->bufferSize = (width * (height / 2) * planes);
 
 	this->sendBufferA = true;
 	this->bufferA = new uint16_t[bufferSize];
 	this->bufferB = new uint16_t[bufferSize];
 
-	for (uint8_t x = 0; x < width; x++) {
-		for (uint8_t y = 0; y < height / 2; y++) {
-			uint8_t previousRow = y == 0 ? (height / 2) - 1 : y;
+	for (uint8_t y = 0; y < height / 2; y++) {
+		uint8_t previousRow = y == 0 ? (height / 2) - 1 : y;
 
-			uint16_t rowLines =
-					previousRow % 2 ? 0x0001 << A_SHIFT :
-					0 | previousRow % 4 ? 0x0001 << B_SHIFT :
-					0 | previousRow % 8 ? 0x0001 << C_SHIFT :
-					0 | previousRow % 16 ? 0x0001 << D_SHIFT : 0;
+		uint16_t rowLines = (previousRow & 0x01 ? 0x0001 << A_SHIFT : 0)
+				| (previousRow & 0x02 ? 0x0001 << B_SHIFT : 0)
+				| (previousRow & 0x04 ? 0x0001 << C_SHIFT : 0)
+				| (previousRow & 0x08 ? 0x0001 << D_SHIFT : 0);
 
+		for (uint8_t x = 0; x < width; x++) {
 			for (uint8_t plane = 0; plane < planes; plane++) {
-				uint16_t offset = BufferOffset(x, y, plane, width, planes);
+				uint16_t offset = BufferOffset(x, y, plane);
 
 				bufferA[offset] = rowLines;
 				bufferB[offset] = rowLines;
@@ -118,14 +126,54 @@ uint8_t MatrixDriver::PlaneBits(uint8_t value) {
 	return result;
 }
 
+void MatrixDriver::Dump() {
+	uint16_t *outputBuffer = sendBufferA ? bufferB : bufferA;
+
+	for (uint8_t y = 0; y < height / 2; y++) {
+		for (uint8_t x = 0; x < width; x++) {
+			for (uint8_t plane = 0; plane < planes; plane++) {
+				uint16_t offset = BufferOffset(x, y, plane);
+
+				uint16_t val = outputBuffer[offset];
+
+				uint8_t r0, g0, b0, r1, g1, b1, a, b, c, d;
+
+				r0 = (val & (0x0001 << R0_SHIFT)) > 0;
+				g0 = (val & (0x0001 << G0_SHIFT)) > 0;
+				b0 = (val & (0x0001 << B0_SHIFT)) > 0;
+
+				r1 = (val & (0x0001 << R1_SHIFT)) > 0;
+				g1 = (val & (0x0001 << G1_SHIFT)) > 0;
+				b1 = (val & (0x0001 << B1_SHIFT)) > 0;
+
+				a = (val & (0x0001 << A_SHIFT)) > 0;
+				b = (val & (0x0001 << B_SHIFT)) > 0;
+				c = (val & (0x0001 << C_SHIFT)) > 0;
+				d = (val & (0x0001 << D_SHIFT)) > 0;
+
+				uint8_t rowVal = a | b << 1 | c << 2 | d << 3;
+
+				sprintf(buffer,
+						"%02u, %02u @ %u: %02x - %x %x %x - %x %x %x @ %x %x %x %x - %d\n",
+						x, y, plane, val, r0, g0, b0, r1, g1, b1, a, b, c, d,
+						rowVal);
+
+				HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer),
+						10);
+			}
+
+		}
+	}
+}
+
 void MatrixDriver::SetPixel(uint8_t x, uint8_t y, uint8_t r, uint8_t g,
 		uint8_t b) {
 	uint8_t rShift, gShift, bShift;
 
 	//Set data into the buffer we aren't sending at the moment
-	uint16_t *buffer = sendBufferA ? bufferB : bufferA;
+	uint16_t *outputBuffer = sendBufferA ? bufferB : bufferA;
 
-	if (y < this->height / 2) {
+	if (y < (height / 2)) {
 		rShift = R0_SHIFT;
 		gShift = G0_SHIFT;
 		bShift = B0_SHIFT;
@@ -135,60 +183,67 @@ void MatrixDriver::SetPixel(uint8_t x, uint8_t y, uint8_t r, uint8_t g,
 		bShift = B1_SHIFT;
 	}
 
-	uint16_t pixelMask = (0x01 << rShift) | (0x01 << gShift) | (0x01 << bShift);
+	uint16_t pixelMask = (0x0001 << rShift) | (0x0001 << gShift)
+			| (0x0001 << bShift);
 	uint8_t rPlanes = PlaneBits(r);
 	uint8_t gPlanes = PlaneBits(g);
 	uint8_t bPlanes = PlaneBits(b);
 
 	for (int plane = 0; plane < planes; plane++) {
 		uint16_t planePixelBits = (
-				(rPlanes & 0x01 << plane) ? 0x01 << rShift : 0)
-				| ((gPlanes & 0x01 << plane) ? 0x01 << gShift : 0)
-				| ((bPlanes & 0x01 << plane) ? 0x01 << bShift : 0);
+				(rPlanes & (0x01 << plane)) ? 0x0001 << rShift : 0)
+				| ((gPlanes & (0x01 << plane)) ? 0x0001 << gShift : 0)
+				| ((bPlanes & (0x01 << plane)) ? 0x0001 << bShift : 0);
 
-		uint16_t offset = BufferOffset(x, y, plane, width, planes);
+//		sprintf(buffer,
+//				"%02u, %02u : %02x %02x %02x %04x %04x\n",
+//				x, y, rPlanes, gPlanes, bPlanes, planePixelBits, pixelMask);
 
-		for (int element = 0; element < elementPerPlanePixel; element++) {
-			buffer[offset + element] = (buffer[offset] & ~pixelMask)
-					| planePixelBits;
-		}
+//		HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer),
+//				10);
+
+		uint16_t offset = BufferOffset(x, y, plane);
+
+		outputBuffer[offset] = (outputBuffer[offset] & ~pixelMask)
+				| planePixelBits;
 	}
 }
 
 void MatrixDriver::SwapBuffer() {
-	sendBufferA = !sendBufferA;
+//	sendBufferA = !sendBufferA;
+//
+//	nextOffset = 0;
 
-	nextOffset = 0;
+	if(hdma_memtomem_dma1_channel3.State == HAL_DMA_STATE_BUSY){
+		//DMA is in process, we'll do an abort and then switch in the interrupt handler
+		HAL_DMA_Abort_IT(&hdma_memtomem_dma1_channel3);
+	} else {
+		sendBufferA = !sendBufferA;
+
+		uint16_t *outputBuffer = sendBufferA ? bufferA : bufferB;
+
+		HAL_DMA_Start_IT(&hdma_memtomem_dma1_channel3, ouputBuffer, GPIOB, bufferSize);
+
+		nextOffset = 0;
+	}
 }
 
-uint32_t cycles = 0;
-extern char buffer[1024];
-uint32_t latchTicks = 0;
-
 void MatrixDriver::SendPlanePixel() {
-	HAL_UART_Transmit(&huart1, (uint8_t *)"B\n", 2, 10);
+	uint16_t *outputBuffer = sendBufferA ? bufferA : bufferB;
 
-	uint16_t *buffer = sendBufferA ? bufferA : bufferB;
-
-	if((nextOffset % (width * planes)) == 0) {
+	if ((nextOffset % (width * planes)) == 0) {
 		//Latch the previous row
 		Latch();
 	}
 
-	GPIOB->ODR = (uint32_t) buffer[nextOffset++];
+	GPIOB->ODR = (uint32_t) outputBuffer[nextOffset++];
 
-	if(nextOffset >= bufferSize) {
+	if (nextOffset >= bufferSize) {
 		nextOffset = 0;
 	}
 }
 
 void MatrixDriver::Clock() {
-	cycles++;
-
-	sprintf(buffer, "A: %lu\n", cycles);
-
-	HAL_UART_Transmit(&huart1, (uint8_t *)buffer, strlen(buffer), 10);
-
 	GPIOB->BSRR = (0x0001 << CLK_SHIFT);
 	//Clock will be cleared on next output
 }
@@ -201,7 +256,7 @@ void MatrixDriver::Latch() {
 
 	sprintf(buffer, "LAT Duration: %lu\n", duration);
 
-	HAL_UART_Transmit(&huart1, (uint8_t *)buffer, strlen(buffer), 10);
+	//HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
 
 	HAL_IWDG_Refresh(&hiwdg);
 

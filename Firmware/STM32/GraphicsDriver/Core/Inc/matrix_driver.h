@@ -23,15 +23,18 @@ public:
 
 	void Send();
 
+	void Dump();
+
 	void SendPlanePixel();
 	void Clock();
 	void Latch();
 private:
+	uint16_t BufferOffset(uint8_t x, uint8_t y, uint8_t plane);
+
 	TIM_HandleTypeDef *htim;
 
 	uint8_t width;
 	uint8_t height;
-	uint8_t elementPerPlanePixel;
 	uint8_t planes;
 	ScanType scanType;
 

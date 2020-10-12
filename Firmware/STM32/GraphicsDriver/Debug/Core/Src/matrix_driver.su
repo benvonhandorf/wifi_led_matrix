@@ -1,11 +1,12 @@
-matrix_driver.cpp:36:6:void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef*)	16	static
-matrix_driver.cpp:41:6:void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef*)	16	static
-matrix_driver.cpp:46:10:uint16_t BufferOffset(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t)	16	static
-matrix_driver.cpp:51:1:MatrixDriver::MatrixDriver(uint8_t, uint8_t, MatrixDriver::ScanType, TIM_HandleTypeDef*)	40	static
-matrix_driver.cpp:89:6:void MatrixDriver::open()	16	static
-matrix_driver.cpp:95:9:uint8_t MatrixDriver::PlaneBits(uint8_t)	24	static
-matrix_driver.cpp:121:6:void MatrixDriver::SetPixel(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t)	64	static
-matrix_driver.cpp:158:6:void MatrixDriver::SwapBuffer()	16	static
-matrix_driver.cpp:168:6:void MatrixDriver::SendPlanePixel()	24	static
-matrix_driver.cpp:185:6:void MatrixDriver::Clock()	16	static
-matrix_driver.cpp:196:6:void MatrixDriver::Latch()	24	static
+matrix_driver.cpp:40:6:void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef*)	16	static
+matrix_driver.cpp:45:6:void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef*)	16	static
+matrix_driver.cpp:50:10:uint16_t MatrixDriver::BufferOffset(uint8_t, uint8_t, uint8_t)	16	static
+matrix_driver.cpp:55:1:MatrixDriver::MatrixDriver(uint8_t, uint8_t, MatrixDriver::ScanType, TIM_HandleTypeDef*)	24	static
+matrix_driver.cpp:91:6:void MatrixDriver::open()	16	static
+matrix_driver.cpp:97:9:uint8_t MatrixDriver::PlaneBits(uint8_t)	24	static
+matrix_driver.cpp:123:6:void MatrixDriver::Dump()	136	static
+matrix_driver.cpp:163:6:void MatrixDriver::SetPixel(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t)	40	static
+matrix_driver.cpp:206:6:void MatrixDriver::SwapBuffer()	16	static
+matrix_driver.cpp:212:6:void MatrixDriver::SendPlanePixel()	24	static
+matrix_driver.cpp:227:6:void MatrixDriver::Clock()	16	static
+matrix_driver.cpp:232:6:void MatrixDriver::Latch()	24	static
