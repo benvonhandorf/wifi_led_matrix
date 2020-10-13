@@ -39,19 +39,23 @@ uint32_t cycles = 0;
 extern char buffer[1024];
 uint32_t latchTicks = 0;
 
-//void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim) {
-//	//This will trigger DMA eventually
-//	instance->SendPlanePixel();
-//}
+void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim) {
+	//This will trigger DMA eventually
+	instance->SendPlanePixel();
+}
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	//This will trigger clock pulse
 	instance->Clock();
 }
 
-//void DMA_Interrupt(DMA_HandleTypeDef *hdma) {
-//	if(hdma->State == )
-//}
+void DMA_HalfComplete(DMA_HandleTypeDef *hdma) {
+	HAL_UART_Transmit(&huart1, (uint8_t*) "Half\n", 5, 10);
+}
+
+void DMA_Complete(DMA_HandleTypeDef *hdma) {
+	instance->Send();
+}
 
 uint16_t MatrixDriver::BufferOffset(uint8_t x, uint8_t y, uint8_t plane) {
 	//TODO: Take plane into account for offset
@@ -92,12 +96,27 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType,
 	}
 
 	instance = this;
+
+	hdma_memtomem_dma1_channel3.XferHalfCpltCallback = DMA_HalfComplete;
+	hdma_memtomem_dma1_channel3.XferCpltCallback = DMA_Complete;
 }
 
 void MatrixDriver::open() {
+	Send();
+
 	__HAL_TIM_ENABLE_IT(htim, TIM_IT_CC4);
 
+//	__HAL_TIM_ENABLE_DMA(htim, TIM_DMA_CC4);
+
 	HAL_TIM_Base_Start_IT(htim);
+}
+
+void MatrixDriver::Send() {
+	HAL_UART_Transmit(&huart1, (uint8_t*) "Send\n", 5, 10);
+
+	uint16_t *outputBuffer = sendBufferA ? bufferA : bufferB;
+
+	HAL_DMA_Start_IT(&hdma_memtomem_dma1_channel3, (uint32_t) outputBuffer, (uint32_t)&(GPIOB->ODR), bufferSize);
 }
 
 uint8_t MatrixDriver::PlaneBits(uint8_t value) {
@@ -210,22 +229,9 @@ void MatrixDriver::SetPixel(uint8_t x, uint8_t y, uint8_t r, uint8_t g,
 }
 
 void MatrixDriver::SwapBuffer() {
-//	sendBufferA = !sendBufferA;
-//
-//	nextOffset = 0;
+	sendBufferA = !sendBufferA;
 
-	if(hdma_memtomem_dma1_channel3.State == HAL_DMA_STATE_BUSY){
-		//DMA is in process, we'll do an abort and then switch in the interrupt handler
-		HAL_DMA_Abort_IT(&hdma_memtomem_dma1_channel3);
-	} else {
-		sendBufferA = !sendBufferA;
-
-		uint16_t *outputBuffer = sendBufferA ? bufferA : bufferB;
-
-		HAL_DMA_Start_IT(&hdma_memtomem_dma1_channel3, ouputBuffer, GPIOB, bufferSize);
-
-		nextOffset = 0;
-	}
+	nextOffset = 0;
 }
 
 void MatrixDriver::SendPlanePixel() {

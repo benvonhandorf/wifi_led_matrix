@@ -54,24 +54,24 @@ extern "C" int cpp_main(void) {
 	matrix.open();
 
 	while (1) {
-		for (uint8_t row = 0; row < 32; row++) {
-			for (uint8_t col = 0; col < 128; col++) {
-				uint8_t r, g, b;
-
-				r = ((row + color_shift) % 3) == 0 ? 255 : 0;
-				g = ((row + color_shift) % 3) == 1 ? 255 : 0;
-				b = ((row + color_shift) % 3) == 2 ? 255 : 0;
-
-				matrix.SetPixel(col, row, r, g, b);
-			}
-		}
-
-		color_shift++;
-
-		color_shift = color_shift % 3;
-
-		matrix.SwapBuffer();
-
-		HAL_Delay(1000);
+//		for (uint8_t row = 0; row < 32; row++) {
+//			for (uint8_t col = 0; col < 128; col++) {
+//				uint8_t r, g, b;
+//
+//				r = ((row + color_shift) % 3) == 0 ? 255 : 0;
+//				g = ((row + color_shift) % 3) == 1 ? 255 : 0;
+//				b = ((row + color_shift) % 3) == 2 ? 255 : 0;
+//
+//				matrix.SetPixel(col, row, r, g, b);
+//			}
+//		}
+//
+//		color_shift++;
+//
+//		color_shift = color_shift % 3;
+//
+//		matrix.SwapBuffer();
+//
+//		HAL_Delay(1000);
 	}
 }
