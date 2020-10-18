@@ -11,7 +11,7 @@
 class MatrixDriver {
 public:
 	enum ScanType { SCAN_16 };
-	MatrixDriver(uint8_t width, uint8_t height, ScanType scanType, TIM_HandleTypeDef *htim );
+	MatrixDriver(uint8_t width, uint8_t height, ScanType scanType);
 
 	void open();
 
@@ -21,6 +21,8 @@ public:
 
 	void SwapBuffer();
 
+	void Handle();
+
 	void Send();
 
 	void Dump();
@@ -28,11 +30,14 @@ public:
 	void SendPlanePixel();
 	void Clock();
 	void Latch();
+
+	void StartNextDma();
+
+	bool handleNeeded = false;
 private:
 	uint16_t BufferOffset(uint8_t x, uint8_t y, uint8_t plane);
 
-	TIM_HandleTypeDef *htim;
-
+	uint8_t rowLeadIn; //Extra entries at the start of a row.  Used to give DMA and CLK a chance to sync up.  They'll be clocked out at the start of a row so will be driven off the end
 	uint8_t width;
 	uint8_t height;
 	uint8_t planes;
@@ -43,6 +48,9 @@ private:
 	uint16_t bufferSize;
 	uint16_t *bufferA;
 	uint16_t *bufferB;
+
+	uint16_t rowPlane = 0;
+	uint16_t rowPlaneSize = 0;
 
 	uint16_t nextOffset = 0;
 };

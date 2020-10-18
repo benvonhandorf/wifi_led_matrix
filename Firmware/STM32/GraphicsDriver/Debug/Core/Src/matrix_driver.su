@@ -1,14 +1,14 @@
-matrix_driver.cpp:47:6:void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef*)	16	static
-matrix_driver.cpp:52:6:void DMA_HalfComplete(DMA_HandleTypeDef*)	16	static
-matrix_driver.cpp:56:6:void DMA_Complete(DMA_HandleTypeDef*)	16	static
-matrix_driver.cpp:60:10:uint16_t MatrixDriver::BufferOffset(uint8_t, uint8_t, uint8_t)	16	static
-matrix_driver.cpp:65:1:MatrixDriver::MatrixDriver(uint8_t, uint8_t, MatrixDriver::ScanType, TIM_HandleTypeDef*)	24	static
+matrix_driver.cpp:48:6:void DMA_Complete(DMA_HandleTypeDef*)	16	static
+matrix_driver.cpp:55:10:uint16_t MatrixDriver::BufferOffset(uint8_t, uint8_t, uint8_t)	16	static
+matrix_driver.cpp:60:1:MatrixDriver::MatrixDriver(uint8_t, uint8_t, MatrixDriver::ScanType)	32	static
 matrix_driver.cpp:104:6:void MatrixDriver::open()	16	static
-matrix_driver.cpp:114:6:void MatrixDriver::Send()	24	static
-matrix_driver.cpp:122:9:uint8_t MatrixDriver::PlaneBits(uint8_t)	24	static
-matrix_driver.cpp:148:6:void MatrixDriver::Dump()	136	static
-matrix_driver.cpp:188:6:void MatrixDriver::SetPixel(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t)	40	static
-matrix_driver.cpp:231:6:void MatrixDriver::SwapBuffer()	16	static
-matrix_driver.cpp:237:6:void MatrixDriver::SendPlanePixel()	24	static
-matrix_driver.cpp:252:6:void MatrixDriver::Clock()	16	static
-matrix_driver.cpp:257:6:void MatrixDriver::Latch()	24	static
+matrix_driver.cpp:131:6:void MatrixDriver::Send()	16	static
+matrix_driver.cpp:140:9:uint8_t MatrixDriver::PlaneBits(uint8_t)	24	static
+matrix_driver.cpp:166:6:void MatrixDriver::Dump()	136	static
+matrix_driver.cpp:206:6:void MatrixDriver::SetPixel(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t)	40	static
+matrix_driver.cpp:249:6:void MatrixDriver::SwapBuffer()	16	static
+matrix_driver.cpp:255:6:void MatrixDriver::SendPlanePixel()	16	static
+matrix_driver.cpp:270:6:void MatrixDriver::Clock()	16	static
+matrix_driver.cpp:275:6:void MatrixDriver::Handle()	16	static
+matrix_driver.cpp:291:6:void MatrixDriver::StartNextDma()	24	static
+matrix_driver.cpp:304:6:void MatrixDriver::Latch()	24	static

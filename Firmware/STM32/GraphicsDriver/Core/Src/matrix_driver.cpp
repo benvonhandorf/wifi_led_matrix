@@ -23,9 +23,10 @@
 #define D_SHIFT 6
 #define E_SHIFT 7
 
-#define CLK_SHIFT 11
 #define LAT_SHIFT 12
 #define OE_SHIFT 13
+
+//CLK moves to A0 to allow PWM output of the clock
 
 static MatrixDriver *instance;
 
@@ -33,60 +34,67 @@ extern UART_HandleTypeDef huart1;
 
 extern IWDG_HandleTypeDef hiwdg;
 
-extern DMA_HandleTypeDef hdma_memtomem_dma1_channel3;
+extern TIM_HandleTypeDef htim2;
+extern TIM_HandleTypeDef htim3;
+extern DMA_HandleTypeDef hdma_tim2_up;
 
 uint32_t cycles = 0;
 extern char buffer[1024];
 uint32_t latchTicks = 0;
 
-void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim) {
-	//This will trigger DMA eventually
-	instance->SendPlanePixel();
-}
+//void DMA_HalfComplete(DMA_HandleTypeDef *hdma) {
+////	HAL_UART_Transmit(&huart1, (uint8_t*) "Half\n", 5, 10);
+//}
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-	//This will trigger clock pulse
-	instance->Clock();
-}
+void TIM3_PeriodComplete(TIM_HandleTypeDef *htim) {
 
-void DMA_HalfComplete(DMA_HandleTypeDef *hdma) {
-	HAL_UART_Transmit(&huart1, (uint8_t*) "Half\n", 5, 10);
 }
 
 void DMA_Complete(DMA_HandleTypeDef *hdma) {
-	instance->Send();
+	TIM_CCxChannelCmd(htim2.Instance, TIM_CHANNEL_1, TIM_CCx_DISABLE);
+
+	instance->handleNeeded = true;
+	instance->Handle();
 }
 
 uint16_t MatrixDriver::BufferOffset(uint8_t x, uint8_t y, uint8_t plane) {
 	//TODO: Take plane into account for offset
-	return ((y % (height / 2))  * width) + x;
+	return ((y % (height / 2)) * rowPlaneSize) + rowLeadIn + x;
 }
 
-MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType,
-		TIM_HandleTypeDef *htim) {
-	this->htim = htim;
-
+MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
+	this->rowLeadIn = 0;
 	this->width = width;
 	this->height = height;
 	this->scanType = scanType;
 	this->planes = 1;
 
-	this->bufferSize = (width * (height / 2) * planes);
+	this->rowPlane = 0;
+	this->rowPlaneSize = width + rowLeadIn;
+	this->bufferSize = (rowPlaneSize * (height / 2) * planes);
 
 	this->sendBufferA = true;
 	this->bufferA = new uint16_t[bufferSize];
 	this->bufferB = new uint16_t[bufferSize];
 
 	for (uint8_t y = 0; y < height / 2; y++) {
-		uint8_t previousRow = y == 0 ? (height / 2) - 1 : y;
+		uint8_t previousRow = y == 0 ? (height / 2) - 1 : y - 1;
 
 		uint16_t rowLines = (previousRow & 0x01 ? 0x0001 << A_SHIFT : 0)
 				| (previousRow & 0x02 ? 0x0001 << B_SHIFT : 0)
 				| (previousRow & 0x04 ? 0x0001 << C_SHIFT : 0)
 				| (previousRow & 0x08 ? 0x0001 << D_SHIFT : 0);
 
-		for (uint8_t x = 0; x < width; x++) {
-			for (uint8_t plane = 0; plane < planes; plane++) {
+		for (uint8_t plane = 0; plane < planes; plane++) {
+			for(int8_t leadIn = -rowLeadIn ; leadIn < 0 ; leadIn++) {
+				uint16_t offset = BufferOffset(0, y, plane) + leadIn;
+
+				bufferA[offset] = rowLines;
+				bufferB[offset] = rowLines;
+			}
+
+			for (uint8_t x = 0; x < width; x++) {
+
 				uint16_t offset = BufferOffset(x, y, plane);
 
 				bufferA[offset] = rowLines;
@@ -96,27 +104,42 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType,
 	}
 
 	instance = this;
-
-	hdma_memtomem_dma1_channel3.XferHalfCpltCallback = DMA_HalfComplete;
-	hdma_memtomem_dma1_channel3.XferCpltCallback = DMA_Complete;
 }
 
 void MatrixDriver::open() {
-	Send();
+	HAL_UART_Transmit(&huart1, (uint8_t*) "Open\n", 5, 10);
 
-	__HAL_TIM_ENABLE_IT(htim, TIM_IT_CC4);
+	hdma_tim2_up.XferCpltCallback = DMA_Complete;
+
+	HAL_NVIC_SetPriority(TIM2_IRQn, 0, 0);
+
+	HAL_NVIC_EnableIRQ(TIM2_IRQn);
+	//
+//	__HAL_TIM_ENABLE_IT(&htim2, TIM_IT_CC1);
+	//  __HAL_TIM_ENABLE_IT(&htim2, TIM_IT_UPDATE);
+
+	__HAL_TIM_ENABLE_DMA(&htim2, TIM_DMA_UPDATE);
+
+//	__HAL_TIM_ENABLE_IT(htim, TIM_IT_CC4);
 
 //	__HAL_TIM_ENABLE_DMA(htim, TIM_DMA_CC4);
 
-	HAL_TIM_Base_Start_IT(htim);
+//	TIM_CCxChannelCmd(htim2.Instance, TIM_CHANNEL_1, TIM_CCx_DISABLE);
+
+	HAL_TIM_Base_Start(&htim2);
+
+	rowPlane = 0;
+
+	StartNextDma();
 }
 
 void MatrixDriver::Send() {
 	HAL_UART_Transmit(&huart1, (uint8_t*) "Send\n", 5, 10);
-
-	uint16_t *outputBuffer = sendBufferA ? bufferA : bufferB;
-
-	HAL_DMA_Start_IT(&hdma_memtomem_dma1_channel3, (uint32_t) outputBuffer, (uint32_t)&(GPIOB->ODR), bufferSize);
+//
+//	uint16_t *outputBuffer = sendBufferA ? bufferA : bufferB;
+//
+//	HAL_DMA_Start_IT(&hdma_memtomem_dma1_channel3, (uint32_t) outputBuffer,
+//			(uint32_t) &(GPIOB->ODR), bufferSize);
 }
 
 uint8_t MatrixDriver::PlaneBits(uint8_t value) {
@@ -231,27 +254,56 @@ void MatrixDriver::SetPixel(uint8_t x, uint8_t y, uint8_t r, uint8_t g,
 void MatrixDriver::SwapBuffer() {
 	sendBufferA = !sendBufferA;
 
-	nextOffset = 0;
+	rowPlane = 0;
 }
 
 void MatrixDriver::SendPlanePixel() {
-	uint16_t *outputBuffer = sendBufferA ? bufferA : bufferB;
-
-	if ((nextOffset % (width * planes)) == 0) {
-		//Latch the previous row
-		Latch();
-	}
-
-	GPIOB->ODR = (uint32_t) outputBuffer[nextOffset++];
-
-	if (nextOffset >= bufferSize) {
-		nextOffset = 0;
-	}
+//	uint16_t *outputBuffer = sendBufferA ? bufferA : bufferB;
+//
+//	if ((nextOffset % (width * planes)) == 0) {
+//		//Latch the previous row
+//		Latch();
+//	}
+//
+//	GPIOB->ODR = (uint32_t) outputBuffer[nextOffset++];
+//
+//	if (nextOffset >= bufferSize) {
+//		nextOffset = 0;
+//	}
 }
 
 void MatrixDriver::Clock() {
-	GPIOB->BSRR = (0x0001 << CLK_SHIFT);
+//	GPIOB->BSRR = (0x0001 << CLK_SHIFT);
 	//Clock will be cleared on next output
+}
+
+void MatrixDriver::Handle() {
+	if (handleNeeded) {
+		Latch();
+
+		rowPlane++;
+
+		if(rowPlane >= ((height / 2) * planes)) {
+			rowPlane = 0;
+		}
+
+		StartNextDma();
+
+		handleNeeded = false;
+	}
+}
+
+void MatrixDriver::StartNextDma() {
+	uint16_t *outputBuffer = sendBufferA ? bufferA : bufferB;
+	outputBuffer += (rowPlane * rowPlaneSize);
+
+//	sprintf(buffer, "StartNextDma: %lu - %d\n", outputBuffer, rowPlane);
+//	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
+
+	HAL_DMA_Start_IT(&hdma_tim2_up, (uint32_t) outputBuffer,
+			(uint32_t) &(GPIOB->ODR), rowPlaneSize);
+
+	TIM_CCxChannelCmd(htim2.Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
 }
 
 void MatrixDriver::Latch() {
@@ -260,7 +312,7 @@ void MatrixDriver::Latch() {
 	uint32_t duration = now - latchTicks;
 	latchTicks = now;
 
-	sprintf(buffer, "LAT Duration: %lu\n", duration);
+//	sprintf(buffer, "LAT Duration: %lu\n", duration);
 
 	//HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
 
