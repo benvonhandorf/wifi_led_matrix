@@ -26,9 +26,9 @@ extern "C" int cpp_main(void) {
 		for (uint16_t col = 0; col < 64; col++) {
 			uint8_t r, g, b;
 
-			r = ((row  + col + color_shift) % 3) == 0 ? 255 : 0;
-			g = ((row + col + color_shift) % 3) == 1 ? 255 : 0;
-			b = ((row + col + color_shift) % 3) == 2 ? 255 : 0;
+			r = ((row  + col + color_shift) % 4) == 0 ? 255 : 0;
+			g = ((row + col + color_shift) % 4) == 1 ? 255 : 0;
+			b = ((row + col + color_shift) % 4) == 2 ? 255 : 0;
 
 			matrix.SetPixel(col, row, r, g, b);
 		}
@@ -54,7 +54,6 @@ extern "C" int cpp_main(void) {
 
 	while (1) {
 
-//		if(color_shift == 1) {
 //		for (uint16_t row = 0; row < 32; row++) {
 //			for (uint16_t col = 0; col < 64; col++) {
 //				uint8_t r, g, b;
@@ -67,14 +66,10 @@ extern "C" int cpp_main(void) {
 //			}
 //		}
 //
-//		matrix.Dump();
-//
 //		matrix.SwapBuffer();
 //
-//		}
-//
 //		color_shift++;
-
-
+//
+//		HAL_Delay(100);
 	}
 }

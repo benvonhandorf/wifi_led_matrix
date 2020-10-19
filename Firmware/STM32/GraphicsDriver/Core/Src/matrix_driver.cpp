@@ -46,15 +46,15 @@ uint32_t latchTicks = 0;
 ////	HAL_UART_Transmit(&huart1, (uint8_t*) "Half\n", 5, 10);
 //}
 
-void TIM3_PeriodComplete(TIM_HandleTypeDef *htim) {
-
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	if(htim == &htim3) {
+		instance->handleNeeded = true;
+		instance->Handle();
+	}
 }
 
 void DMA_Complete(DMA_HandleTypeDef *hdma) {
-	TIM_CCxChannelCmd(htim2.Instance, TIM_CHANNEL_1, TIM_CCx_DISABLE);
 
-	instance->handleNeeded = true;
-	instance->Handle();
 }
 
 uint16_t MatrixDriver::BufferOffset(uint8_t x, uint8_t y, uint8_t plane) {
@@ -114,6 +114,8 @@ void MatrixDriver::open() {
 	HAL_NVIC_SetPriority(TIM2_IRQn, 0, 0);
 
 	HAL_NVIC_EnableIRQ(TIM2_IRQn);
+
+	//TODO: Configure TIM3 based on expected width
 	//
 //	__HAL_TIM_ENABLE_IT(&htim2, TIM_IT_CC1);
 	//  __HAL_TIM_ENABLE_IT(&htim2, TIM_IT_UPDATE);
@@ -126,7 +128,7 @@ void MatrixDriver::open() {
 
 //	TIM_CCxChannelCmd(htim2.Instance, TIM_CHANNEL_1, TIM_CCx_DISABLE);
 
-	HAL_TIM_Base_Start(&htim2);
+	HAL_TIM_OC_Start(&htim2, TIM_CHANNEL_1);
 
 	rowPlane = 0;
 
@@ -300,10 +302,12 @@ void MatrixDriver::StartNextDma() {
 //	sprintf(buffer, "StartNextDma: %lu - %d\n", outputBuffer, rowPlane);
 //	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
 
+	HAL_TIM_Base_Stop_IT(&htim3);
+
 	HAL_DMA_Start_IT(&hdma_tim2_up, (uint32_t) outputBuffer,
 			(uint32_t) &(GPIOB->ODR), rowPlaneSize);
 
-	TIM_CCxChannelCmd(htim2.Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
+	HAL_TIM_Base_Start_IT(&htim3);
 }
 
 void MatrixDriver::Latch() {
@@ -317,6 +321,8 @@ void MatrixDriver::Latch() {
 	//HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
 
 	HAL_IWDG_Refresh(&hiwdg);
+
+	htim2.Instance->CNT = 0;
 
 	//Disable output
 	GPIOB->BSRR = (0x0001 << OE_SHIFT);
