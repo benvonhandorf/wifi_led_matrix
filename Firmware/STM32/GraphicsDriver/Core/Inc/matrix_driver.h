@@ -23,12 +23,8 @@ public:
 
 	void Handle();
 
-	void Send();
-
 	void Dump();
 
-	void SendPlanePixel();
-	void Clock();
 	void Latch();
 
 	void StartNextDma();

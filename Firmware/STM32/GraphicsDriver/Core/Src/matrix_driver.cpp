@@ -12,19 +12,35 @@
 
 #define R0_SHIFT 0
 #define G0_SHIFT 1
-#define B0_SHIFT 15
-#define R1_SHIFT 8
-#define G1_SHIFT 9
-#define B1_SHIFT 10
+#define B0_SHIFT 2
+#define R1_SHIFT 3
+#define G1_SHIFT 4
+#define B1_SHIFT 5
 
-#define A_SHIFT 3
-#define B_SHIFT 4
-#define C_SHIFT 5
-#define D_SHIFT 6
-#define E_SHIFT 7
+#define M1_R0_SHIFT 6
+#define M1_G0_SHIFT 7
+#define M1_B0_SHIFT 8
+#define M1_R1_SHIFT 9
+#define M1_G1_SHIFT 10
+#define M1_B1_SHIFT	11
 
-#define LAT_SHIFT 12
-#define OE_SHIFT 13
+
+//LAT lives on PA11
+#define LAT_SHIFT 11
+
+//OE lives on PA13
+#define OE_SHIFT 12
+
+//CLK lives on PA1
+
+//Select lines on PA
+#define A_SHIFT 2
+#define B_SHIFT 3
+#define C_SHIFT 4
+#define D_SHIFT 8
+#define E_SHIFT 15
+
+
 
 //CLK moves to A0 to allow PWM output of the clock
 
@@ -79,20 +95,14 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 	this->bufferB = new uint16_t[bufferSize];
 
 	for (uint8_t y = 0; y < height / 2; y++) {
-		uint8_t previousRow = y == 0 ? (height / 2) - 1 : y - 1;
-
-		uint16_t rowLines = (previousRow & 0x01 ? 0x0001 << A_SHIFT : 0)
-				| (previousRow & 0x02 ? 0x0001 << B_SHIFT : 0)
-				| (previousRow & 0x04 ? 0x0001 << C_SHIFT : 0)
-				| (previousRow & 0x08 ? 0x0001 << D_SHIFT : 0);
 
 		for (uint8_t plane = 0; plane < planes; plane++) {
 			for (uint8_t x = 0; x < width; x++) {
 
 				uint16_t offset = BufferOffset(x, y, plane);
 
-				bufferA[offset] = rowLines;
-				bufferB[offset] = rowLines;
+				bufferA[offset] = 0x00;
+				bufferB[offset] = 0x00;
 			}
 		}
 	}
@@ -108,7 +118,7 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 }
 
 void MatrixDriver::open() {
-	HAL_UART_Transmit(&huart1, (uint8_t*) "Open\n", 5, 10);
+	HAL_UART_Transmit(&huart1, (uint8_t*) "OPEN\n", 5, 10);
 
 	hdma_tim2_ch1.XferCpltCallback = DMA_Complete;
 
@@ -130,15 +140,6 @@ void MatrixDriver::open() {
 	nextDmaOffset = 0;
 
 	StartNextDma();
-}
-
-void MatrixDriver::Send() {
-	HAL_UART_Transmit(&huart1, (uint8_t*) "Send\n", 5, 10);
-//
-//	uint16_t *outputBuffer = sendBufferA ? bufferA : bufferB;
-//
-//	HAL_DMA_Start_IT(&hdma_memtomem_dma1_channel3, (uint32_t) outputBuffer,
-//			(uint32_t) &(GPIOB->ODR), bufferSize);
 }
 
 uint8_t MatrixDriver::PlaneBits(uint8_t value) {
@@ -256,26 +257,6 @@ void MatrixDriver::SwapBuffer() {
 	nextDmaOffset = 0;
 }
 
-void MatrixDriver::SendPlanePixel() {
-//	uint16_t *outputBuffer = sendBufferA ? bufferA : bufferB;
-//
-//	if ((nextOffset % (width * planes)) == 0) {
-//		//Latch the previous row
-//		Latch();
-//	}
-//
-//	GPIOB->ODR = (uint32_t) outputBuffer[nextOffset++];
-//
-//	if (nextOffset >= bufferSize) {
-//		nextOffset = 0;
-//	}
-}
-
-void MatrixDriver::Clock() {
-//	GPIOB->BSRR = (0x0001 << CLK_SHIFT);
-	//Clock will be cleared on next output
-}
-
 void MatrixDriver::Handle() {
 	if (handleNeeded) {
 		if ((nextDmaOffset % width) == 0) {
@@ -327,12 +308,27 @@ void MatrixDriver::Latch() {
 
 	HAL_IWDG_Refresh(&hiwdg);
 
-	//Disable output
-	GPIOB->BSRR = (0x0001 << OE_SHIFT);
-	//Latch output
-	GPIOB->BSRR = (0x0001 << LAT_SHIFT);
-	//Reset Latch
-	GPIOB->BSRR = (0x0001 << (LAT_SHIFT + 16));
-//	//Reset ~OE
-//	GPIOB->BSRR = (0x0001 << (OE_SHIFT + 16));
+	uint16_t row = nextDmaOffset / width;
+
+	uint8_t previousRow = row == 0 ? (height / 2) - 1 : row - 1;
+
+	//Set or reset each specific line for selection
+	uint32_t bsrr = (previousRow & 0x01 ? 0x0001 << A_SHIFT : 0x0001 << (A_SHIFT + 16))
+			| (previousRow & 0x02 ? 0x0001 << B_SHIFT : 0x0001 << (B_SHIFT + 16))
+			| (previousRow & 0x04 ? 0x0001 << C_SHIFT : 0x0001 << (C_SHIFT + 16))
+			| (previousRow & 0x08 ? 0x0001 << D_SHIFT : 0x0001 << (D_SHIFT + 16))
+			| (previousRow & 0x10 ? 0x0001 << E_SHIFT : 0x0001 << (E_SHIFT + 16));
+
+
+	//Disable output & latch
+	GPIOA->BSRR = (0x0001 << OE_SHIFT) ;
+
+	GPIOA->BSRR = (0x0001 << LAT_SHIFT);
+
+	GPIOA->BSRR = (0x0001 << (LAT_SHIFT + 16));
+	//Configure row lines
+	GPIOA->BSRR = bsrr;
+
+	//Enable output
+	GPIOA->BSRR = (0x0001 << (OE_SHIFT + 16)) ;
 }

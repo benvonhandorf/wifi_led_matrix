@@ -1,14 +1,11 @@
-matrix_driver.cpp:56:6:void DMA_Complete(DMA_HandleTypeDef*)	16	static
-matrix_driver.cpp:62:10:uint16_t MatrixDriver::BufferOffset(uint8_t, uint8_t, uint8_t)	16	static
-matrix_driver.cpp:69:1:MatrixDriver::MatrixDriver(uint8_t, uint8_t, MatrixDriver::ScanType)	24	static
-matrix_driver.cpp:110:6:void MatrixDriver::open()	16	static
-matrix_driver.cpp:135:6:void MatrixDriver::Send()	16	static
-matrix_driver.cpp:144:9:uint8_t MatrixDriver::PlaneBits(uint8_t)	24	static
-matrix_driver.cpp:170:6:void MatrixDriver::Dump()	136	static
-matrix_driver.cpp:210:6:void MatrixDriver::SetPixel(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t)	40	static
-matrix_driver.cpp:253:6:void MatrixDriver::SwapBuffer()	16	static
-matrix_driver.cpp:259:6:void MatrixDriver::SendPlanePixel()	16	static
-matrix_driver.cpp:274:6:void MatrixDriver::Clock()	16	static
-matrix_driver.cpp:279:6:void MatrixDriver::Handle()	16	static
-matrix_driver.cpp:291:6:void MatrixDriver::StartNextDma()	32	static
-matrix_driver.cpp:318:6:void MatrixDriver::Latch()	16	static
+matrix_driver.cpp:72:6:void DMA_Complete(DMA_HandleTypeDef*)	16	static
+matrix_driver.cpp:78:10:uint16_t MatrixDriver::BufferOffset(uint8_t, uint8_t, uint8_t)	16	static
+matrix_driver.cpp:85:1:MatrixDriver::MatrixDriver(uint8_t, uint8_t, MatrixDriver::ScanType)	24	static
+matrix_driver.cpp:120:6:void MatrixDriver::open()	16	static
+matrix_driver.cpp:145:9:uint8_t MatrixDriver::PlaneBits(uint8_t)	24	static
+matrix_driver.cpp:171:6:void MatrixDriver::Dump()	136	static
+matrix_driver.cpp:211:6:void MatrixDriver::SetPixel(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t)	40	static
+matrix_driver.cpp:254:6:void MatrixDriver::SwapBuffer()	16	static
+matrix_driver.cpp:260:6:void MatrixDriver::Handle()	16	static
+matrix_driver.cpp:272:6:void MatrixDriver::StartNextDma()	32	static
+matrix_driver.cpp:299:6:void MatrixDriver::Latch()	24	static

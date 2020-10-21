@@ -308,7 +308,6 @@ static void MX_TIM1_Init(void)
   /* USER CODE BEGIN TIM1_Init 2 */
 
   /* USER CODE END TIM1_Init 2 */
-  HAL_TIM_MspPostInit(&htim1);
 
 }
 
@@ -485,24 +484,38 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, Matrix_R0_Pin|Matrix_G0_Pin|Matrix_B1_Pin|Matrix_CLK_Pin
-                          |Matrix_LAT_Pin|Matrix_OE_Pin|Matrix_B0_Pin|Matrix_A_Pin
-                          |Matrix_B_Pin|Matrix_C_Pin|Matrix_D_Pin|Matrix_E_Pin
-                          |Matrix_R1_Pin|Matrix_G1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, Matrix_A_Pin|Matrix_B_Pin|Matrix_C_Pin|Matrix_D_Pin
+                          |Matrix_LAT_Pin|Matrix_OE_Pin|Matrix_E_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : Matrix_R0_Pin Matrix_G0_Pin Matrix_B1_Pin Matrix_CLK_Pin
-                           Matrix_LAT_Pin Matrix_OE_Pin Matrix_B0_Pin Matrix_A_Pin
-                           Matrix_B_Pin Matrix_C_Pin Matrix_D_Pin Matrix_E_Pin
-                           Matrix_R1_Pin Matrix_G1_Pin */
-  GPIO_InitStruct.Pin = Matrix_R0_Pin|Matrix_G0_Pin|Matrix_B1_Pin|Matrix_CLK_Pin
-                          |Matrix_LAT_Pin|Matrix_OE_Pin|Matrix_B0_Pin|Matrix_A_Pin
-                          |Matrix_B_Pin|Matrix_C_Pin|Matrix_D_Pin|Matrix_E_Pin
-                          |Matrix_R1_Pin|Matrix_G1_Pin;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, Matrix_R0_Pin|Matrix_G0_Pin|Matrix_B0_Pin|Matrix2_G1_Pin
+                          |Matrix2_B1_Pin|LED_7A_Pin|LED_7B_Pin|LED_8A_Pin
+                          |LED_8B_Pin|Matrix_R1_Pin|Matrix_G1_Pin|Matrix_B1_Pin
+                          |Matrix2_R0_Pin|Matrix2_G0_Pin|Matrix2_B0_Pin|Matrix2_R1_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : Matrix_A_Pin Matrix_B_Pin Matrix_C_Pin Matrix_D_Pin
+                           Matrix_LAT_Pin Matrix_OE_Pin Matrix_E_Pin */
+  GPIO_InitStruct.Pin = Matrix_A_Pin|Matrix_B_Pin|Matrix_C_Pin|Matrix_D_Pin
+                          |Matrix_LAT_Pin|Matrix_OE_Pin|Matrix_E_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : Matrix_R0_Pin Matrix_G0_Pin Matrix_B0_Pin Matrix2_G1_Pin
+                           Matrix2_B1_Pin LED_7A_Pin LED_7B_Pin LED_8A_Pin
+                           LED_8B_Pin Matrix_R1_Pin Matrix_G1_Pin Matrix_B1_Pin
+                           Matrix2_R0_Pin Matrix2_G0_Pin Matrix2_B0_Pin Matrix2_R1_Pin */
+  GPIO_InitStruct.Pin = Matrix_R0_Pin|Matrix_G0_Pin|Matrix_B0_Pin|Matrix2_G1_Pin
+                          |Matrix2_B1_Pin|LED_7A_Pin|LED_7B_Pin|LED_8A_Pin
+                          |LED_8B_Pin|Matrix_R1_Pin|Matrix_G1_Pin|Matrix_B1_Pin
+                          |Matrix2_R0_Pin|Matrix2_G0_Pin|Matrix2_B0_Pin|Matrix2_R1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
