@@ -11,4 +11,4 @@ matrix_driver.cpp:259:6:void MatrixDriver::SendPlanePixel()	16	static
 matrix_driver.cpp:274:6:void MatrixDriver::Clock()	16	static
 matrix_driver.cpp:279:6:void MatrixDriver::Handle()	16	static
 matrix_driver.cpp:291:6:void MatrixDriver::StartNextDma()	32	static
-matrix_driver.cpp:319:6:void MatrixDriver::Latch()	16	static
+matrix_driver.cpp:318:6:void MatrixDriver::Latch()	16	static

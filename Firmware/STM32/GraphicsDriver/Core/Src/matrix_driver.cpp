@@ -159,7 +159,7 @@ uint8_t MatrixDriver::PlaneBits(uint8_t value) {
 //		value -= 31;
 //	}
 
-	if (value > 1) {
+	if (value > 50) {
 		result |= 0x01;
 		value -= 1;
 	}
@@ -278,7 +278,7 @@ void MatrixDriver::Clock() {
 
 void MatrixDriver::Handle() {
 	if (handleNeeded) {
-		if((nextDmaOffset % width) == 0 )  {
+		if ((nextDmaOffset % width) == 0) {
 			Latch();
 		}
 
@@ -294,8 +294,7 @@ void MatrixDriver::StartNextDma() {
 
 	uint32_t operations = MIN(maxDmaOperations, bufferSize - nextDmaOffset);
 
-	HAL_DMA_Start_IT(&hdma_tim2_ch1,
-			(uint32_t) outputBuffer,
+	HAL_DMA_Start_IT(&hdma_tim2_ch1, (uint32_t) outputBuffer,
 			(uint32_t) &(GPIOB->ODR), operations);
 
 	//Number of TIM1 ticks to drive data_size elements.
@@ -311,7 +310,7 @@ void MatrixDriver::StartNextDma() {
 
 	nextDmaOffset += operations;
 
-	if(nextDmaOffset >= bufferSize) {
+	if (nextDmaOffset >= bufferSize) {
 		nextDmaOffset = 0;
 	}
 }
@@ -334,6 +333,6 @@ void MatrixDriver::Latch() {
 	GPIOB->BSRR = (0x0001 << LAT_SHIFT);
 	//Reset Latch
 	GPIOB->BSRR = (0x0001 << (LAT_SHIFT + 16));
-	//Reset ~OE
-	GPIOB->BSRR = (0x0001 << (OE_SHIFT + 16));
+//	//Reset ~OE
+//	GPIOB->BSRR = (0x0001 << (OE_SHIFT + 16));
 }

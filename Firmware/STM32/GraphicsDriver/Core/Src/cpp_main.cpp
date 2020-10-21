@@ -3,6 +3,9 @@
 #include <string.h>
 
 #include "matrix_driver.h"
+
+#include "image.h"
+
 extern IWDG_HandleTypeDef hiwdg;
 
 extern SPI_HandleTypeDef hspi1;
@@ -15,6 +18,11 @@ char buffer[1024];
 
 uint32_t lastUpdate = 0;
 
+//1 - test pattern
+//2 - advancing pixel
+//3 - image
+#define DRAW 3
+
 extern "C" int cpp_main(void) {
 	__HAL_DBGMCU_FREEZE_IWDG();
 
@@ -22,17 +30,44 @@ extern "C" int cpp_main(void) {
 
 	uint16_t color_shift = 1;
 
-	for (uint16_t row = 0; row < 32; row++) {
-		for (uint16_t col = 0; col < 64; col++) {
+	uint16_t pos = 0;
+
+#if DRAW == 1
+	for (uint16_t col = 0; col < IMAGE_WIDTH; col++) {
+		for (uint16_t row = 0; row < IMAGE_HEIGHT; row++) {
+
 			uint8_t r, g, b;
 
 			r = ((row + col + color_shift) % 4) == 0 ? 255 : 0;
 			g = ((row + col + color_shift) % 4) == 1 ? 255 : 0;
 			b = ((row + col + color_shift) % 4) == 2 ? 255 : 0;
 
-			matrix.SetPixel(col, row, r, g, b);
+			matrix.SetPixel(row, col, r, g, b);
 		}
 	}
+#elif DRAW == 2
+	for (uint16_t row = 0; row < 32; row++) {
+		for (uint16_t col = 0; col < 64; col++) {
+
+			if (row == pos / 64 && col == pos % 64) {
+				matrix.SetPixel(col, row, 255, 0, 0);
+			} else {
+				matrix.SetPixel(col, row, 0, 0, 0);
+			}
+		}
+	}
+#elif DRAW == 3
+		for (uint16_t col = 0; col < IMAGE_WIDTH; col++) {
+			for (uint16_t row = 0; row < IMAGE_HEIGHT; row++) {
+				uint8_t r = IMAGE_DATA[col][row][0];
+				uint8_t g = IMAGE_DATA[col][row][1];
+				uint8_t b = IMAGE_DATA[col][row][2];
+
+				matrix.SetPixel(col, row, r, g, b);
+			}
+		}
+#else
+#endif
 
 	lastUpdate = HAL_GetTick();
 
@@ -48,34 +83,62 @@ extern "C" int cpp_main(void) {
 
 	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 500);
 
-//	HAL_IWDG_Init(&hiwdg);
-
-//	HAL_TIM_OC_Start(&htim2, TIM_IT_CC1);
-
 	matrix.open();
 
 	while (1) {
 
-//		matrix.Handle();
-
 		uint32_t now = HAL_GetTick();
 
-		if ((now - lastUpdate) > 100) {
-			for (uint16_t row = 0; row < 32; row++) {
-				for (uint16_t col = 0; col < 64; col++) {
+		if ((now - lastUpdate) > 10) {
+
+#if DRAW == 1
+			for (uint16_t col = 0; col < IMAGE_WIDTH; col++) {
+				for (uint16_t row = 0; row < IMAGE_HEIGHT; row++) {
+
 					uint8_t r, g, b;
 
-					r = ((row + col + color_shift) % 3) == 0 ? 255 : 0;
-					g = ((row + col + color_shift) % 3) == 1 ? 255 : 0;
-					b = ((row + col + color_shift) % 3) == 2 ? 255 : 0;
+					r = ((row + col + color_shift) % 4) == 0 ? 255 : 0;
+					g = ((row + col + color_shift) % 4) == 1 ? 255 : 0;
+					b = ((row + col + color_shift) % 4) == 2 ? 255 : 0;
 
 					matrix.SetPixel(col, row, r, g, b);
 				}
 			}
+			color_shift++;
 
 			matrix.SwapBuffer();
 
-			color_shift++;
+#elif DRAW == 2
+			for (uint16_t row = 0; row < 32; row++) {
+				for (uint16_t col = 0; col < 64; col++) {
+
+					if (row == pos / 64 && col == pos % 64) {
+						matrix.SetPixel(col, row, 255, 0, 0);
+					} else {
+						matrix.SetPixel(col, row, 0, 0, 0);
+					}
+				}
+			}
+			pos++;
+
+			if (pos > (32 * 64)) {
+				pos = 0;
+			}
+
+			matrix.SwapBuffer();
+#endif
+
+//			for (uint16_t row = 0; row < 32; row++) {
+//				for (uint16_t col = 0; col < 64; col++) {
+//					uint8_t r, g, b;
+//
+//					r = ((row + col + color_shift) % 4) == 0 ? 255 : 0;
+//					g = ((row + col + color_shift) % 4) == 1 ? 255 : 0;
+//					b = ((row + col + color_shift) % 4) == 2 ? 255 : 0;
+//
+//					matrix.SetPixel(col, row, r, g, b);
+//				}
+//			}
 
 			lastUpdate = now;
 		}
