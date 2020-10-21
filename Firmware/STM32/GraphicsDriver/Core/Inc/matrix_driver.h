@@ -37,7 +37,6 @@ public:
 private:
 	uint16_t BufferOffset(uint8_t x, uint8_t y, uint8_t plane);
 
-	uint8_t rowLeadIn; //Extra entries at the start of a row.  Used to give DMA and CLK a chance to sync up.  They'll be clocked out at the start of a row so will be driven off the end
 	uint8_t width;
 	uint8_t height;
 	uint8_t planes;
@@ -49,10 +48,8 @@ private:
 	uint16_t *bufferA;
 	uint16_t *bufferB;
 
-	uint16_t rowPlane = 0;
-	uint16_t rowPlaneSize = 0;
-
-	uint16_t nextOffset = 0;
+	uint8_t	maxDmaOperations; //Size of an individual DMA burst
+	uint16_t nextDmaOffset = 0;
 };
 
 #endif /* INC_MATRIX_DRIVER_H_ */

@@ -35,8 +35,8 @@ extern UART_HandleTypeDef huart1;
 extern IWDG_HandleTypeDef hiwdg;
 
 extern TIM_HandleTypeDef htim2;
-extern TIM_HandleTypeDef htim3;
-extern DMA_HandleTypeDef hdma_tim2_up;
+extern TIM_HandleTypeDef htim1;
+extern DMA_HandleTypeDef hdma_tim2_ch1;
 
 uint32_t cycles = 0;
 extern char buffer[1024];
@@ -46,32 +46,33 @@ uint32_t latchTicks = 0;
 ////	HAL_UART_Transmit(&huart1, (uint8_t*) "Half\n", 5, 10);
 //}
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-	if(htim == &htim3) {
-		instance->handleNeeded = true;
-		instance->Handle();
-	}
-}
+//void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+//	if (htim == &htim1) {
+//		instance->handleNeeded = true;
+//		instance->Handle();
+//	}
+//}
 
 void DMA_Complete(DMA_HandleTypeDef *hdma) {
+	instance->handleNeeded = true;
 
+	instance->Handle();
 }
 
 uint16_t MatrixDriver::BufferOffset(uint8_t x, uint8_t y, uint8_t plane) {
 	//TODO: Take plane into account for offset
-	return ((y % (height / 2)) * rowPlaneSize) + rowLeadIn + x;
+	return ((y % (height / 2)) * width) + x;
 }
 
+#define MIN(a,b) (((a)<(b))?(a):(b))
+
 MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
-	this->rowLeadIn = 0;
 	this->width = width;
 	this->height = height;
 	this->scanType = scanType;
 	this->planes = 1;
 
-	this->rowPlane = 0;
-	this->rowPlaneSize = width + rowLeadIn;
-	this->bufferSize = (rowPlaneSize * (height / 2) * planes);
+	this->bufferSize = (width * (height / 2) * planes);
 
 	this->sendBufferA = true;
 	this->bufferA = new uint16_t[bufferSize];
@@ -86,13 +87,6 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 				| (previousRow & 0x08 ? 0x0001 << D_SHIFT : 0);
 
 		for (uint8_t plane = 0; plane < planes; plane++) {
-			for(int8_t leadIn = -rowLeadIn ; leadIn < 0 ; leadIn++) {
-				uint16_t offset = BufferOffset(0, y, plane) + leadIn;
-
-				bufferA[offset] = rowLines;
-				bufferB[offset] = rowLines;
-			}
-
 			for (uint8_t x = 0; x < width; x++) {
 
 				uint16_t offset = BufferOffset(x, y, plane);
@@ -103,34 +97,37 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 		}
 	}
 
+	//DMA must complete at the end of a row to allow
+	//an opportunity to latch the data but it cannot exceed
+	//32 DMA operations due to the TIM1 RCR being limited to a uint8_t
+	//and an effective 7 RCR / operation.
+	//RCR = (OPS * 7) - 1
+	maxDmaOperations = MIN(32, width);
+
 	instance = this;
 }
 
 void MatrixDriver::open() {
 	HAL_UART_Transmit(&huart1, (uint8_t*) "Open\n", 5, 10);
 
-	hdma_tim2_up.XferCpltCallback = DMA_Complete;
+	hdma_tim2_ch1.XferCpltCallback = DMA_Complete;
 
 	HAL_NVIC_SetPriority(TIM2_IRQn, 0, 0);
 
 	HAL_NVIC_EnableIRQ(TIM2_IRQn);
 
-	//TODO: Configure TIM3 based on expected width
-	//
-//	__HAL_TIM_ENABLE_IT(&htim2, TIM_IT_CC1);
-	//  __HAL_TIM_ENABLE_IT(&htim2, TIM_IT_UPDATE);
+	__HAL_TIM_ENABLE_IT(&htim1, TIM_IT_UPDATE);
 
-	__HAL_TIM_ENABLE_DMA(&htim2, TIM_DMA_UPDATE);
+	__HAL_TIM_ENABLE_DMA(&htim2, TIM_DMA_CC1);
 
-//	__HAL_TIM_ENABLE_IT(htim, TIM_IT_CC4);
+	TIM_CCxChannelCmd(htim2.Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
+	TIM_CCxChannelCmd(htim2.Instance, TIM_CHANNEL_2, TIM_CCx_ENABLE);
 
-//	__HAL_TIM_ENABLE_DMA(htim, TIM_DMA_CC4);
+	HAL_TIM_Base_Start(&htim2);
 
-//	TIM_CCxChannelCmd(htim2.Instance, TIM_CHANNEL_1, TIM_CCx_DISABLE);
+	TIM_CCxChannelCmd(htim1.Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
 
-	HAL_TIM_OC_Start(&htim2, TIM_CHANNEL_1);
-
-	rowPlane = 0;
+	nextDmaOffset = 0;
 
 	StartNextDma();
 }
@@ -256,7 +253,7 @@ void MatrixDriver::SetPixel(uint8_t x, uint8_t y, uint8_t r, uint8_t g,
 void MatrixDriver::SwapBuffer() {
 	sendBufferA = !sendBufferA;
 
-	rowPlane = 0;
+	nextDmaOffset = 0;
 }
 
 void MatrixDriver::SendPlanePixel() {
@@ -281,12 +278,8 @@ void MatrixDriver::Clock() {
 
 void MatrixDriver::Handle() {
 	if (handleNeeded) {
-		Latch();
-
-		rowPlane++;
-
-		if(rowPlane >= ((height / 2) * planes)) {
-			rowPlane = 0;
+		if((nextDmaOffset % width) == 0 )  {
+			Latch();
 		}
 
 		StartNextDma();
@@ -297,32 +290,43 @@ void MatrixDriver::Handle() {
 
 void MatrixDriver::StartNextDma() {
 	uint16_t *outputBuffer = sendBufferA ? bufferA : bufferB;
-	outputBuffer += (rowPlane * rowPlaneSize);
+	outputBuffer += nextDmaOffset;
 
-//	sprintf(buffer, "StartNextDma: %lu - %d\n", outputBuffer, rowPlane);
-//	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
+	uint32_t operations = MIN(maxDmaOperations, bufferSize - nextDmaOffset);
 
-	HAL_TIM_Base_Stop_IT(&htim3);
+	HAL_DMA_Start_IT(&hdma_tim2_ch1,
+			(uint32_t) outputBuffer,
+			(uint32_t) &(GPIOB->ODR), operations);
 
-	HAL_DMA_Start_IT(&hdma_tim2_up, (uint32_t) outputBuffer,
-			(uint32_t) &(GPIOB->ODR), rowPlaneSize);
+	//Number of TIM1 ticks to drive data_size elements.
+	uint8_t rcr = (operations * 8) - 1;
 
-	HAL_TIM_Base_Start_IT(&htim3);
+	htim1.Instance->RCR = rcr;
+	htim1.Instance->EGR = TIM_EGR_UG; //Generate an update event to absorb RCR
+	htim2.Instance->CNT = 0;
+
+	HAL_TIM_Base_Stop(&htim1);
+
+	HAL_TIM_Base_Start_IT(&htim1);
+
+	nextDmaOffset += operations;
+
+	if(nextDmaOffset >= bufferSize) {
+		nextDmaOffset = 0;
+	}
 }
 
 void MatrixDriver::Latch() {
-	uint32_t now = HAL_GetTick();
-
-	uint32_t duration = now - latchTicks;
-	latchTicks = now;
-
+//	uint32_t now = HAL_GetTick();
+//
+//	uint32_t duration = now - latchTicks;
+//	latchTicks = now;
+//
 //	sprintf(buffer, "LAT Duration: %lu\n", duration);
-
-	//HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
+//
+//	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
 
 	HAL_IWDG_Refresh(&hiwdg);
-
-	htim2.Instance->CNT = 0;
 
 	//Disable output
 	GPIOB->BSRR = (0x0001 << OE_SHIFT);
