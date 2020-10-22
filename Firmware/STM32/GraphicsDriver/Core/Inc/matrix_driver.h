@@ -39,6 +39,7 @@ private:
 	ScanType scanType;
 
 	bool sendBufferA;
+	bool completeSwap = false;
 
 	uint16_t planeSize;
 	uint16_t bufferSize;

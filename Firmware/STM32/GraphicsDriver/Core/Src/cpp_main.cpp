@@ -47,11 +47,13 @@ extern "C" int cpp_main(void) {
 		}
 	}
 #elif DRAW == 2
-	for (uint16_t row = 0; row < 32; row++) {
-		for (uint16_t col = 0; col < 64; col++) {
+	for (uint16_t col = 0; col < IMAGE_WIDTH; col++) {
+		for (uint16_t row = 0; row < IMAGE_HEIGHT; row++) {
 			uint8_t r = ((row == (pos / 64)) && (col == pos % 64)) ? 255 : 0;
-			uint8_t g = ((row == (pos / 64) + 1) && (col == pos % 64)) ? 255 : 0;
-			uint8_t b = ((row == (pos / 64) + 2) && (col == pos % 64)) ? 255 : 0;
+			uint8_t g =
+					((row == (pos / 64) + 1) && (col == pos % 64)) ? 255 : 0;
+			uint8_t b =
+					((row == (pos / 64) + 2) && (col == pos % 64)) ? 255 : 0;
 
 			matrix.SetPixel(col, row, r, g, b);
 		}
@@ -98,7 +100,7 @@ extern "C" int cpp_main(void) {
 
 		uint32_t now = HAL_GetTick();
 
-		if ((now - lastUpdate) > 10) {
+		if ((now - lastUpdate) > 5) {
 
 #if DRAW == 1
 			for (uint16_t col = 0; col < IMAGE_WIDTH; col++) {
@@ -118,21 +120,30 @@ extern "C" int cpp_main(void) {
 			matrix.SwapBuffer();
 
 #elif DRAW == 2
-			pos = 33;
+			//pos 64:
+			//Panel 1: Red on row 1, Green on row 2, faint green on row 13, flickering red on row 15, all in col 0
+			//flickering red about halfway across row 15
+			//Panel 2: Red on row 1, Blue on row 2, looks steady
+//			pos = 65;
 
-			for (uint16_t row = 0; row < 32; row++) {
-				for (uint16_t col = 0; col < 64; col++) {
+			for (uint16_t col = 0; col < IMAGE_WIDTH; col++) {
+				for (uint16_t row = 0; row < IMAGE_HEIGHT; row++) {
 
-					uint8_t r = row == (pos / 64) && col == (pos % 64) ? 255 : 0;
-					uint8_t g = row == (pos / 64) + 1 && col == (pos % 64) ? 255 : 0;
-					uint8_t b = row == (pos / 64) + 2 && col == (pos % 64) ? 255 : 0;
+					uint8_t r =
+							row == (pos / 64) && col == (pos % 64) ? 255 : 0;
+					uint8_t g =
+							row == (pos / 64) + 1 && col == (pos % 64) ?
+									255 : 0;
+					uint8_t b =
+							row == (pos / 64) + 2 && col == (pos % 64) ?
+									255 : 0;
 
 					matrix.SetPixel(col, row, r, g, b);
 				}
 			}
 			pos++;
 
-			if (pos > (32 * 64)) {
+			if (pos > (IMAGE_WIDTH /* IMAGE_HEIGHT*/)) {
 				pos = 0;
 			}
 
