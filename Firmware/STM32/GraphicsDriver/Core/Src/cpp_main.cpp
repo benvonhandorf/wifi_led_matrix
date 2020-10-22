@@ -22,7 +22,7 @@ uint32_t lastUpdate = 0;
 //2 - advancing pixel
 //3 - image
 //4 - Debugging
-#define DRAW 4
+#define DRAW 2
 
 extern "C" int cpp_main(void) {
 	__HAL_DBGMCU_FREEZE_IWDG();
@@ -39,9 +39,9 @@ extern "C" int cpp_main(void) {
 
 			uint8_t r, g, b;
 
-			r = ((row + col + color_shift) % 4) == 0 ? 255 : 0;
-			g = ((row + col + color_shift) % 4) == 1 ? 255 : 0;
-			b = ((row + col + color_shift) % 4) == 2 ? 255 : 0;
+			r = ((row + col + color_shift) % 4) == 0 ? 255 / col : 0;
+			g = ((row + col + color_shift) % 4) == 1 ? 255 / row : 0;
+			b = ((row + col + color_shift) % 4) == 2 ? 4 * col: 0;
 
 			matrix.SetPixel(row, col, r, g, b);
 		}
@@ -71,7 +71,7 @@ extern "C" int cpp_main(void) {
 		for (uint16_t row = 0; row < IMAGE_HEIGHT; row++) {
 			uint8_t r = 0;
 			uint8_t g = 0;
-			uint8_t b = (col > 32) ? 255 : 0;
+			uint8_t b = (col > 32) ? (row %2 == 0) ? 255 : 75 : 0;
 
 			matrix.SetPixel(col, row, r, g, b);
 		}
@@ -106,9 +106,9 @@ extern "C" int cpp_main(void) {
 
 					uint8_t r, g, b;
 
-					r = ((row + col + color_shift) % 4) == 0 ? 255 : 0;
-					g = ((row + col + color_shift) % 4) == 1 ? 255 : 0;
-					b = ((row + col + color_shift) % 4) == 2 ? 255 : 0;
+					r = ((row + col + color_shift) % 4) == 0 ? 4 * ( 64 - col) : 0;
+					g = ((row + col + color_shift) % 4) == 1 ? 4 * (row + 1) : 0;
+					b = ((row + col + color_shift) % 4) == 2 ? 4 * col: 0;
 
 					matrix.SetPixel(col, row, r, g, b);
 				}
@@ -118,11 +118,14 @@ extern "C" int cpp_main(void) {
 			matrix.SwapBuffer();
 
 #elif DRAW == 2
+			pos = 33;
+
 			for (uint16_t row = 0; row < 32; row++) {
 				for (uint16_t col = 0; col < 64; col++) {
-					uint8_t r = row == pos / 64 && col == pos % 64 ? 255 : 0;
-					uint8_t g = row == (pos / 64) + 1 && col == pos % 64 ? 255 : 0;
-					uint8_t b = row == (pos / 64) + 2 && col == pos % 64 ? 255 : 0;
+
+					uint8_t r = row == (pos / 64) && col == (pos % 64) ? 255 : 0;
+					uint8_t g = row == (pos / 64) + 1 && col == (pos % 64) ? 255 : 0;
+					uint8_t b = row == (pos / 64) + 2 && col == (pos % 64) ? 255 : 0;
 
 					matrix.SetPixel(col, row, r, g, b);
 				}

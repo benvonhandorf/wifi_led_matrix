@@ -24,7 +24,6 @@
 #define M1_G1_SHIFT 10
 #define M1_B1_SHIFT	11
 
-
 //LAT lives on PA11
 #define LAT_SHIFT 11
 
@@ -39,8 +38,6 @@
 #define C_SHIFT 4
 #define D_SHIFT 8
 #define E_SHIFT 15
-
-
 
 //CLK moves to A0 to allow PWM output of the clock
 
@@ -76,8 +73,7 @@ void DMA_Complete(DMA_HandleTypeDef *hdma) {
 }
 
 uint16_t MatrixDriver::BufferOffset(uint8_t x, uint8_t y, uint8_t plane) {
-	//TODO: Take plane into account for offset
-	return ((y % (height / 2)) * width) + x;
+	return (plane * planeSize) + ((y % (height / 2)) * width) + x;
 }
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
@@ -86,9 +82,10 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 	this->width = width;
 	this->height = height;
 	this->scanType = scanType;
-	this->planes = 1;
+	this->planes = 4;
 
-	this->bufferSize = (width * (height / 2) * planes);
+	this->planeSize = width * (height / 2);
+	this->bufferSize = planeSize * planes;
 
 	this->sendBufferA = true;
 	this->bufferA = new uint16_t[bufferSize];
@@ -145,22 +142,22 @@ void MatrixDriver::open() {
 uint8_t MatrixDriver::PlaneBits(uint8_t value) {
 	uint8_t result = 0x00;
 
-//	if (value > 127) {
-//		result |= 0x08;
-//		value -= 127;
-//	}
-//
-//	if (value > 63) {
-//		result |= 0x04;
-//		value -= 63;
-//	}
-//
-//	if (value > 31) {
-//		result |= 0x02;
-//		value -= 31;
-//	}
+	if (value > 127) {
+		result |= 0x08;
+		value -= 127;
+	}
 
-	if (value > 50) {
+	if (value > 32) {
+		result |= 0x04;
+		value -= 32;
+	}
+
+	if (value > 8) {
+		result |= 0x02;
+		value -= 8;
+	}
+
+	if (value > 1) {
 		result |= 0x01;
 		value -= 1;
 	}
@@ -227,6 +224,7 @@ void MatrixDriver::SetPixel(uint8_t x, uint8_t y, uint8_t r, uint8_t g,
 
 	uint16_t pixelMask = (0x0001 << rShift) | (0x0001 << gShift)
 			| (0x0001 << bShift);
+
 	uint8_t rPlanes = PlaneBits(r);
 	uint8_t gPlanes = PlaneBits(g);
 	uint8_t bPlanes = PlaneBits(b);
@@ -281,6 +279,9 @@ void MatrixDriver::StartNextDma() {
 	//Number of TIM1 ticks to drive data_size elements.
 	uint8_t rcr = (operations * 8) - 1;
 
+	uint8_t plane = nextDmaOffset / planeSize;
+
+	htim1.Instance->ARR = 1 * (plane + 1);
 	htim1.Instance->RCR = rcr;
 	htim1.Instance->EGR = TIM_EGR_UG; //Generate an update event to absorb RCR
 	htim2.Instance->CNT = 0;
@@ -292,36 +293,41 @@ void MatrixDriver::StartNextDma() {
 	nextDmaOffset += operations;
 
 	if (nextDmaOffset >= bufferSize) {
+//		uint32_t now = HAL_GetTick();
+//
+//		uint32_t duration = now - latchTicks;
+//
+//		sprintf(buffer, "FRM: %lu\n", duration);
+//
+//		HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
+//
+//		latchTicks = HAL_GetTick();
+
 		nextDmaOffset = 0;
 	}
 }
 
 void MatrixDriver::Latch() {
-//	uint32_t now = HAL_GetTick();
-//
-//	uint32_t duration = now - latchTicks;
-//	latchTicks = now;
-//
-//	sprintf(buffer, "LAT: %lu\n", duration);
-//
-//	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
-
 	HAL_IWDG_Refresh(&hiwdg);
 
-	uint16_t row = nextDmaOffset / width;
+	uint16_t row = (nextDmaOffset % planeSize) / width;
 
 	uint8_t previousRow = row == 0 ? (height / 2) - 1 : row - 1;
 
 	//Set or reset each specific line for selection
-	uint32_t bsrr = (previousRow & 0x01 ? 0x0001 << A_SHIFT : 0x0001 << (A_SHIFT + 16))
-			| (previousRow & 0x02 ? 0x0001 << B_SHIFT : 0x0001 << (B_SHIFT + 16))
-			| (previousRow & 0x04 ? 0x0001 << C_SHIFT : 0x0001 << (C_SHIFT + 16))
-			| (previousRow & 0x08 ? 0x0001 << D_SHIFT : 0x0001 << (D_SHIFT + 16))
-			| (previousRow & 0x10 ? 0x0001 << E_SHIFT : 0x0001 << (E_SHIFT + 16));
-
+	uint32_t bsrr =
+			(previousRow & 0x01 ? 0x0001 << A_SHIFT : 0x0001 << (A_SHIFT + 16))
+					| (previousRow & 0x02 ?
+							0x0001 << B_SHIFT : 0x0001 << (B_SHIFT + 16))
+					| (previousRow & 0x04 ?
+							0x0001 << C_SHIFT : 0x0001 << (C_SHIFT + 16))
+					| (previousRow & 0x08 ?
+							0x0001 << D_SHIFT : 0x0001 << (D_SHIFT + 16))
+					| (previousRow & 0x10 ?
+							0x0001 << E_SHIFT : 0x0001 << (E_SHIFT + 16));
 
 	//Disable output & latch
-	GPIOA->BSRR = (0x0001 << OE_SHIFT) ;
+	GPIOA->BSRR = (0x0001 << OE_SHIFT);
 
 	GPIOA->BSRR = (0x0001 << LAT_SHIFT);
 
@@ -330,5 +336,5 @@ void MatrixDriver::Latch() {
 	GPIOA->BSRR = bsrr;
 
 	//Enable output
-	GPIOA->BSRR = (0x0001 << (OE_SHIFT + 16)) ;
+	GPIOA->BSRR = (0x0001 << (OE_SHIFT + 16));
 }

@@ -40,6 +40,7 @@ private:
 
 	bool sendBufferA;
 
+	uint16_t planeSize;
 	uint16_t bufferSize;
 	uint16_t *bufferA;
 	uint16_t *bufferB;
