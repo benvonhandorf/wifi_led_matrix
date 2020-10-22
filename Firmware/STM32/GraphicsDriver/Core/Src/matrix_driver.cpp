@@ -28,7 +28,7 @@
 //LAT lives on PA11
 #define LAT_SHIFT 11
 
-//OE lives on PA13
+//OE lives on PA12
 #define OE_SHIFT 12
 
 //CLK lives on PA1
@@ -302,7 +302,7 @@ void MatrixDriver::Latch() {
 //	uint32_t duration = now - latchTicks;
 //	latchTicks = now;
 //
-//	sprintf(buffer, "LAT Duration: %lu\n", duration);
+//	sprintf(buffer, "LAT: %lu\n", duration);
 //
 //	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
 

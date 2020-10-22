@@ -505,7 +505,7 @@ static void MX_GPIO_Init(void)
                           |Matrix_LAT_Pin|Matrix_OE_Pin|Matrix_E_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : Matrix_R0_Pin Matrix_G0_Pin Matrix_B0_Pin Matrix2_G1_Pin
@@ -518,7 +518,7 @@ static void MX_GPIO_Init(void)
                           |Matrix2_R0_Pin|Matrix2_G0_Pin|Matrix2_B0_Pin|Matrix2_R1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 }
