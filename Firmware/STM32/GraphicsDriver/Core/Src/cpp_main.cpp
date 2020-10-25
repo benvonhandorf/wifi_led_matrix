@@ -22,7 +22,7 @@ uint32_t lastUpdate = 0;
 //2 - advancing pixel
 //3 - image
 //4 - Debugging
-#define DRAW 2
+#define DRAW 3
 
 extern "C" int cpp_main(void) {
 	__HAL_DBGMCU_FREEZE_IWDG();
