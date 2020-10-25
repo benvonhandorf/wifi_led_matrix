@@ -17,35 +17,27 @@
 #define G1_SHIFT 4
 #define B1_SHIFT 5
 
-#define M1_R0_SHIFT 6
-#define M1_G0_SHIFT 7
-#define M1_B0_SHIFT 8
-#define M1_R1_SHIFT 9
-#define M1_G1_SHIFT 10
-#define M1_B1_SHIFT	11
+#define A_SHIFT 6
+#define B_SHIFT 7
+#define C_SHIFT 8
+#define D_SHIFT 9
+#define E_SHIFT 10
 
-//LAT lives on PA11
-#define LAT_SHIFT 11
+#define OE_SHIFT 11
 
-//OE lives on PA12
-#define OE_SHIFT 12
+#define LAT_SHIFT 12
 
-//CLK lives on PA1
-
-//Select lines on PA
-#define A_SHIFT 2
-#define B_SHIFT 3
-#define C_SHIFT 4
-#define D_SHIFT 8
-#define E_SHIFT 15
-
-//CLK moves to A0 to allow PWM output of the clock
+#define CLK_SHIFT 13
 
 #define SET_SHIFT(x) (0x0001 << x)
+#define SET_IF(cond, x) (cond ? SET_SHIFT(x) : 0)
 #define RESET_SHIFT(x) (0x0001 << (x + 16))
 #define BSRR_IF(cond, x) (cond ? SET_SHIFT(x) : RESET_SHIFT(x))
 
 #define LINE_MASK (SET_SHIFT(A_SHIFT) | SET_SHIFT(B_SHIFT) | SET_SHIFT(C_SHIFT) | SET_SHIFT(D_SHIFT) | SET_SHIFT(E_SHIFT) )
+
+#define CYCLES_PER_PIXEL 2
+#define ROW_END_CYCLES 4
 
 static MatrixDriver *instance;
 
@@ -53,9 +45,8 @@ extern UART_HandleTypeDef huart1;
 
 extern IWDG_HandleTypeDef hiwdg;
 
-extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim1;
-extern DMA_HandleTypeDef hdma_tim2_ch1;
+extern DMA_HandleTypeDef hdma_tim1_ch1;
 
 uint32_t cycles = 0;
 extern char buffer[1024];
@@ -72,14 +63,14 @@ uint32_t latchTicks = 0;
 //	}
 //}
 
-void DMA_Complete(DMA_HandleTypeDef *hdma) {
-	instance->handleNeeded = true;
-
+void DMA_Abort(DMA_HandleTypeDef *hdma) {
 	instance->Handle();
 }
 
 uint16_t MatrixDriver::BufferOffset(uint8_t x, uint8_t y, uint8_t plane) {
-	return (plane * planeSize) + ((y % (height / 2)) * width) + x;
+	return (plane * planeSize)
+			+ ((y % (height / 2)) * (width + ROW_END_CYCLES) * CYCLES_PER_PIXEL)
+			+ (x * CYCLES_PER_PIXEL);
 }
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
@@ -90,7 +81,8 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 	this->scanType = scanType;
 	this->planes = 4;
 
-	this->planeSize = width * (height / 2);
+	this->planeSize =
+			(width + ROW_END_CYCLES) * (height / 2) * CYCLES_PER_PIXEL;
 	this->bufferSize = planeSize * planes;
 
 	this->sendBufferA = true;
@@ -99,50 +91,64 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 
 	for (uint8_t y = 0; y < height / 2; y++) {
 
+		uint8_t previousRow = y == 0 ? (height / 2) - 1 : y - 1;
+
+		uint16_t rowSelects = SET_IF(previousRow & 0x01, A_SHIFT)
+		|SET_IF(previousRow & 0x02, B_SHIFT)
+		|SET_IF(previousRow & 0x04, C_SHIFT)
+		|SET_IF(previousRow & 0x08, D_SHIFT)
+		|SET_IF(previousRow & 0x10, E_SHIFT);
+
 		for (uint8_t plane = 0; plane < planes; plane++) {
 			for (uint8_t x = 0; x < width; x++) {
 
 				uint16_t offset = BufferOffset(x, y, plane);
 
-				bufferA[offset] = 0x00;
-				bufferB[offset] = 0x00;
+				bufferA[offset] = rowSelects;
+				bufferB[offset] = rowSelects;
 			}
 		}
-	}
 
-	//DMA must complete at the end of a row to allow
-	//an opportunity to latch the data but it cannot exceed
-	//32 DMA operations due to the TIM1 RCR being limited to a uint8_t
-	//and an effective 7 RCR / operation.
-	//RCR = (OPS * 7) - 1
-	maxDmaOperations = MIN(32, width);
+		//Setup the final bytes for the row
+
+		//Disable outputs
+		uint16_t offset = BufferOffset(width - 1, y, planes - 1) + CYCLES_PER_PIXEL;
+		bufferA[offset] = bufferB[offset] = SET_SHIFT(OE_SHIFT) | rowSelects;
+		offset++;
+
+		uint16_t nextRowSelects = SET_IF(y & 0x01, A_SHIFT)
+		|SET_IF(y & 0x02, B_SHIFT)
+		|SET_IF(y & 0x04, C_SHIFT)
+		|SET_IF(y & 0x08, D_SHIFT)
+		|SET_IF(y & 0x10, E_SHIFT);
+
+		//Latch data, select next row, outputs still off
+		bufferA[offset] = bufferB[offset] = SET_SHIFT(LAT_SHIFT) | SET_SHIFT(OE_SHIFT) | nextRowSelects;
+
+		offset++;
+		bufferA[offset] = bufferB[offset] = nextRowSelects;
+
+		//Bonus cycle to settle.  Probably not necessary but 3 trailing cycles feels odd
+		offset++;
+		bufferA[offset] = bufferB[offset] = nextRowSelects;
+	}
 
 	instance = this;
 }
 
 void MatrixDriver::open() {
-	sprintf(buffer, "CFG: %ux%u Buffers: %u Planes: %u@%u \n", width, height, bufferSize, planes, planeSize);
+	sprintf(buffer, "CFG: %ux%u Buffers: %u Planes: %u@%u \n", width, height,
+			bufferSize, planes, planeSize);
 
 	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
 
-	hdma_tim2_ch1.XferCpltCallback = DMA_Complete;
+	hdma_tim1_ch1.XferAbortCallback = DMA_Abort;
 
-	HAL_NVIC_SetPriority(TIM2_IRQn, 0, 0);
-
-	HAL_NVIC_EnableIRQ(TIM2_IRQn);
-
-	__HAL_TIM_ENABLE_IT(&htim1, TIM_IT_UPDATE);
-
-	__HAL_TIM_ENABLE_DMA(&htim2, TIM_DMA_CC1);
-
-	TIM_CCxChannelCmd(htim2.Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
-	TIM_CCxChannelCmd(htim2.Instance, TIM_CHANNEL_2, TIM_CCx_ENABLE);
-
-	HAL_TIM_Base_Start(&htim2);
+	__HAL_TIM_ENABLE_DMA(&htim1, TIM_DMA_CC1);
 
 	TIM_CCxChannelCmd(htim1.Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
 
-	nextDmaOffset = 0;
+	HAL_TIM_Base_Start_IT(&htim1);
 
 	StartNextDma();
 }
@@ -254,6 +260,7 @@ void MatrixDriver::SetPixel(uint8_t x, uint8_t y, uint8_t r, uint8_t g,
 
 		outputBuffer[offset] = (outputBuffer[offset] & ~pixelMask)
 				| planePixelBits;
+		outputBuffer[offset + 1] | outputBuffer[offset] | SET_SHIFT(CLK_SHIFT);
 	}
 }
 
@@ -261,22 +268,15 @@ void MatrixDriver::SwapBuffer() {
 	sendBufferA = !sendBufferA;
 
 	completeSwap = true;
+
+	HAL_DMA_Abort_IT(&hdma_tim1_ch1);
 }
 
 void MatrixDriver::Handle() {
-	if (handleNeeded) {
-		if (!completeSwap && (nextDmaOffset % width) == 0) {
-			Latch();
-		} else if(completeSwap) {
-			//If we're in the middle of a swap we can skip the latch
-			//and simply start DMAing out the first part of the buffer
-			completeSwap = false;
-			nextDmaOffset = 0;
-		}
+	if (completeSwap) {
+		completeSwap = false;
 
 		StartNextDma();
-
-		handleNeeded = false;
 	}
 }
 
@@ -284,78 +284,8 @@ uint8_t const AAR_BY_PLANE[4] = { 1, 2, 4, 8 };
 
 void MatrixDriver::StartNextDma() {
 	uint16_t *outputBuffer = sendBufferA ? bufferA : bufferB;
-	outputBuffer += nextDmaOffset;
 
-	uint32_t operations = MIN(maxDmaOperations, bufferSize - nextDmaOffset);
-
-	HAL_DMA_Start_IT(&hdma_tim2_ch1, (uint32_t) outputBuffer,
-			(uint32_t) &(GPIOB->ODR), operations);
-
-	//Number of TIM1 ticks to drive data_size elements.
-	uint8_t rcr = (operations * 8) - 1;
-
-	uint8_t plane = nextDmaOffset / planeSize;
-
-	htim1.Instance->ARR = AAR_BY_PLANE[plane];
-	htim1.Instance->RCR = rcr;
-	htim1.Instance->EGR = TIM_EGR_UG; //Generate an update event to absorb RCR
-	htim2.Instance->CNT = 0;
-
-	HAL_TIM_Base_Stop(&htim1);
-
-	HAL_TIM_Base_Start_IT(&htim1);
-
-	nextDmaOffset += operations;
-
-	if (nextDmaOffset >= bufferSize) {
-		nextDmaOffset = 0;
-	}
+	HAL_DMA_Start_IT(&hdma_tim1_ch1, (uint32_t) outputBuffer,
+			(uint32_t) &(GPIOB->ODR), bufferSize);
 }
 
-//uint32_t bsrr = 0x00;
-//uint32_t lastOffset = 0x00;
-
-void MatrixDriver::Latch() {
-	HAL_IWDG_Refresh(&hiwdg);
-
-	uint16_t row = (nextDmaOffset % planeSize) / width;
-
-	uint8_t previousRow = row == 0 ? (height / 2) - 1 : row - 1;
-
-//	uint32_t odra = GPIOA->ODR;
-//
-//	int32_t delta = nextDmaOffset - lastOffset;
-//
-//	if(delta != 64) {
-//		uint32_t now = HAL_GetTick();
-//
-//		uint32_t duration = now - latchTicks;
-//
-//		sprintf(buffer, "LAT: %lu - %u %u %04lx vs %04lx - %d %d\n", duration, row, previousRow, bsrr & LINE_MASK, odra & LINE_MASK, nextDmaOffset, lastOffset);
-//
-//		HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
-//
-//		latchTicks = HAL_GetTick();
-//	}
-
-//	lastOffset = nextDmaOffset;
-
-	//Set or reset each specific line for selection
-	uint32_t bsrr = BSRR_IF(previousRow & 0x01, A_SHIFT) |
-					BSRR_IF(previousRow & 0x02, B_SHIFT) |
-					BSRR_IF(previousRow & 0x04, C_SHIFT) |
-					BSRR_IF(previousRow & 0x08, D_SHIFT) |
-					BSRR_IF(previousRow & 0x10, E_SHIFT);
-
-	//Disable output & latch
-	GPIOA->BSRR = SET_SHIFT(OE_SHIFT);
-
-	GPIOA->BSRR = SET_SHIFT(LAT_SHIFT);
-
-	GPIOA->BSRR = RESET_SHIFT(LAT_SHIFT);
-	//Configure row lines
-	GPIOA->BSRR = bsrr;
-
-	//Enable output
-	GPIOA->BSRR = RESET_SHIFT(OE_SHIFT);
-}

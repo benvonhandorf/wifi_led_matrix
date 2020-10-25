@@ -45,9 +45,8 @@ IWDG_HandleTypeDef hiwdg;
 SPI_HandleTypeDef hspi1;
 
 TIM_HandleTypeDef htim1;
-TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
-DMA_HandleTypeDef hdma_tim2_ch1;
+DMA_HandleTypeDef hdma_tim1_ch1;
 
 UART_HandleTypeDef huart1;
 
@@ -62,7 +61,6 @@ static void MX_DMA_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_IWDG_Init(void);
-static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
@@ -108,7 +106,6 @@ int main(void)
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   MX_IWDG_Init();
-  MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
@@ -254,11 +251,11 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 5;
+  htim1.Init.Prescaler = 0;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim1.Init.Period = 1;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim1.Init.RepetitionCounter = 7;
+  htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
   {
@@ -270,10 +267,6 @@ static void MX_TIM1_Init(void)
     Error_Handler();
   }
   if (HAL_TIM_PWM_Init(&htim1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_TIM_OnePulse_Init(&htim1, TIM_OPMODE_SINGLE) != HAL_OK)
   {
     Error_Handler();
   }
@@ -308,71 +301,6 @@ static void MX_TIM1_Init(void)
   /* USER CODE BEGIN TIM1_Init 2 */
 
   /* USER CODE END TIM1_Init 2 */
-
-}
-
-/**
-  * @brief TIM2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM2_Init(void)
-{
-
-  /* USER CODE BEGIN TIM2_Init 0 */
-
-  /* USER CODE END TIM2_Init 0 */
-
-  TIM_SlaveConfigTypeDef sSlaveConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-  TIM_OC_InitTypeDef sConfigOC = {0};
-
-  /* USER CODE BEGIN TIM2_Init 1 */
-
-  /* USER CODE END TIM2_Init 1 */
-  htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 0;
-  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 7;
-  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_EXTERNAL1;
-  sSlaveConfig.InputTrigger = TIM_TS_ITR0;
-  if (HAL_TIM_SlaveConfigSynchro(&htim2, &sSlaveConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 1;
-  sConfigOC.OCPolarity = TIM_OCPOLARITY_LOW;
-  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sConfigOC.Pulse = 7;
-  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM2_Init 2 */
-
-  /* USER CODE END TIM2_Init 2 */
-  HAL_TIM_MspPostInit(&htim2);
 
 }
 
@@ -468,9 +396,9 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
-  /* DMA1_Channel5_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
+  /* DMA1_Channel2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
 
 }
 
@@ -490,32 +418,26 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, Matrix_A_Pin|Matrix_B_Pin|Matrix_C_Pin|Matrix_D_Pin
-                          |Matrix_LAT_Pin|Matrix_OE_Pin|Matrix_E_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, Matrix_R0_Pin|Matrix_G0_Pin|Matrix_B0_Pin|Matrix2_G1_Pin
-                          |Matrix2_B1_Pin|LED_7A_Pin|LED_7B_Pin|LED_8A_Pin
+  HAL_GPIO_WritePin(GPIOB, Matrix_R0_Pin|Matrix_G0_Pin|Matrix_B0_Pin|Matrix_E_Pin
+                          |Matrix_OE_Pin|Matrix_LAT_Pin|Matrix_CLK_Pin|LED_8A_Pin
                           |LED_8B_Pin|Matrix_R1_Pin|Matrix_G1_Pin|Matrix_B1_Pin
-                          |Matrix2_R0_Pin|Matrix2_G0_Pin|Matrix2_B0_Pin|Matrix2_R1_Pin, GPIO_PIN_RESET);
+                          |Matrix_A_Pin|Matrix_B_Pin|Matrix_C_Pin|Matrix_D_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : Matrix_A_Pin Matrix_B_Pin Matrix_C_Pin Matrix_D_Pin
-                           Matrix_LAT_Pin Matrix_OE_Pin Matrix_E_Pin */
-  GPIO_InitStruct.Pin = Matrix_A_Pin|Matrix_B_Pin|Matrix_C_Pin|Matrix_D_Pin
-                          |Matrix_LAT_Pin|Matrix_OE_Pin|Matrix_E_Pin;
+  /*Configure GPIO pins : Matrix_R0_Pin Matrix_G0_Pin Matrix_B0_Pin Matrix_E_Pin
+                           Matrix_OE_Pin Matrix_LAT_Pin Matrix_CLK_Pin Matrix_R1_Pin
+                           Matrix_G1_Pin Matrix_B1_Pin Matrix_A_Pin Matrix_B_Pin
+                           Matrix_C_Pin Matrix_D_Pin */
+  GPIO_InitStruct.Pin = Matrix_R0_Pin|Matrix_G0_Pin|Matrix_B0_Pin|Matrix_E_Pin
+                          |Matrix_OE_Pin|Matrix_LAT_Pin|Matrix_CLK_Pin|Matrix_R1_Pin
+                          |Matrix_G1_Pin|Matrix_B1_Pin|Matrix_A_Pin|Matrix_B_Pin
+                          |Matrix_C_Pin|Matrix_D_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Matrix_R0_Pin Matrix_G0_Pin Matrix_B0_Pin Matrix2_G1_Pin
-                           Matrix2_B1_Pin LED_7A_Pin LED_7B_Pin LED_8A_Pin
-                           LED_8B_Pin Matrix_R1_Pin Matrix_G1_Pin Matrix_B1_Pin
-                           Matrix2_R0_Pin Matrix2_G0_Pin Matrix2_B0_Pin Matrix2_R1_Pin */
-  GPIO_InitStruct.Pin = Matrix_R0_Pin|Matrix_G0_Pin|Matrix_B0_Pin|Matrix2_G1_Pin
-                          |Matrix2_B1_Pin|LED_7A_Pin|LED_7B_Pin|LED_8A_Pin
-                          |LED_8B_Pin|Matrix_R1_Pin|Matrix_G1_Pin|Matrix_B1_Pin
-                          |Matrix2_R0_Pin|Matrix2_G0_Pin|Matrix2_B0_Pin|Matrix2_R1_Pin;
+  /*Configure GPIO pins : LED_8A_Pin LED_8B_Pin */
+  GPIO_InitStruct.Pin = LED_8A_Pin|LED_8B_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
