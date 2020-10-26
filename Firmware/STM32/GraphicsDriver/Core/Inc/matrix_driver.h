@@ -41,6 +41,8 @@ private:
 	uint16_t bufferSize;
 	uint16_t *bufferA;
 	uint16_t *bufferB;
+
+	uint16_t nextDmaOffset;
 };
 
 #endif /* INC_MATRIX_DRIVER_H_ */

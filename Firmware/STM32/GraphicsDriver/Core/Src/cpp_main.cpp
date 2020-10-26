@@ -12,7 +12,9 @@ extern SPI_HandleTypeDef hspi1;
 
 extern UART_HandleTypeDef huart1;
 
-MatrixDriver matrix(64, 32, MatrixDriver::ScanType::SCAN_16);
+#define PANEL_WIDTH 128
+
+MatrixDriver matrix(PANEL_WIDTH, 32, MatrixDriver::ScanType::SCAN_16);
 
 char buffer[1024];
 
@@ -22,7 +24,7 @@ uint32_t lastUpdate = 0;
 //2 - advancing pixel
 //3 - image
 //4 - Debugging
-#define DRAW 2
+#define DRAW 3
 
 extern "C" int cpp_main(void) {
 	__HAL_DBGMCU_FREEZE_IWDG();
@@ -34,7 +36,7 @@ extern "C" int cpp_main(void) {
 	uint16_t pos = 0;
 
 #if DRAW == 1
-	for (uint16_t col = 0; col < IMAGE_WIDTH; col++) {
+	for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
 		for (uint16_t row = 0; row < IMAGE_HEIGHT; row++) {
 
 			uint8_t r, g, b;
@@ -47,7 +49,7 @@ extern "C" int cpp_main(void) {
 		}
 	}
 #elif DRAW == 2
-	for (uint16_t col = 0; col < IMAGE_WIDTH; col++) {
+	for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
 		for (uint16_t row = 0; row < IMAGE_HEIGHT; row++) {
 			uint8_t r = ((row == (pos / 64)) && (col == pos % 64)) ? 255 : 0;
 			uint8_t g =
@@ -59,11 +61,11 @@ extern "C" int cpp_main(void) {
 		}
 	}
 #elif DRAW == 3
-		for (uint16_t col = 0; col < IMAGE_WIDTH; col++) {
+		for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
 			for (uint16_t row = 0; row < IMAGE_HEIGHT; row++) {
-				uint8_t r = IMAGE_DATA[col][row][0];
-				uint8_t g = IMAGE_DATA[col][row][1];
-				uint8_t b = IMAGE_DATA[col][row][2];
+				uint8_t r = IMAGE_DATA[col % IMAGE_WIDTH][row][0];
+				uint8_t g = IMAGE_DATA[col % IMAGE_WIDTH][row][1];
+				uint8_t b = IMAGE_DATA[col % IMAGE_WIDTH][row][2];
 
 				matrix.SetPixel(col, row, r, g, b);
 			}
@@ -84,7 +86,7 @@ extern "C" int cpp_main(void) {
 
 	color_shift++;
 
-//	matrix.Dump();
+	matrix.Dump();
 
 	matrix.SwapBuffer();
 
@@ -103,14 +105,14 @@ extern "C" int cpp_main(void) {
 		if ((now - lastUpdate) > 5) {
 
 #if DRAW == 1
-			for (uint16_t col = 0; col < IMAGE_WIDTH; col++) {
+			for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
 				for (uint16_t row = 0; row < IMAGE_HEIGHT; row++) {
 
 					uint8_t r, g, b;
 
-					r = ((row + col + color_shift) % 4) == 0 ? 4 * ( 64 - col) : 0;
-					g = ((row + col + color_shift) % 4) == 1 ? 4 * (row + 1) : 0;
-					b = ((row + col + color_shift) % 4) == 2 ? 4 * col: 0;
+					r = ((row + col + color_shift) % 4) == 0 ? 255 : 0;
+					g = ((row + col + color_shift) % 4) == 1 ? 255 : 0;
+					b = ((row + col + color_shift) % 4) == 2 ? 255: 0;
 
 					matrix.SetPixel(col, row, r, g, b);
 				}
@@ -126,7 +128,7 @@ extern "C" int cpp_main(void) {
 			//Panel 2: Red on row 1, Blue on row 2, looks steady
 //			pos = 65;
 
-			for (uint16_t col = 0; col < IMAGE_WIDTH; col++) {
+			for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
 				for (uint16_t row = 0; row < IMAGE_HEIGHT; row++) {
 
 					uint8_t r =
