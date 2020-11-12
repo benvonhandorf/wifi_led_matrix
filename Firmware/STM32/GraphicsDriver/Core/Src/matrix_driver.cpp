@@ -161,6 +161,16 @@ void MatrixDriver::open() {
 	nextDmaOffset = 0;
 
 	StartNextDma();
+
+	__HAL_IWDG_START(&hiwdg);
+}
+
+void MatrixDriver::close() {
+	HAL_DMA_Abort_IT(&hdma_tim1_ch1);
+
+	HAL_TIM_Base_Stop_IT(&htim1);
+
+	nextDmaOffset = 0;
 }
 
 uint8_t MatrixDriver::PlaneBits(uint8_t value) {

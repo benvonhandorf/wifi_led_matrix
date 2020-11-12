@@ -13,8 +13,9 @@ extern SPI_HandleTypeDef hspi1;
 extern UART_HandleTypeDef huart1;
 
 #define PANEL_WIDTH 128
+#define PANEL_HEIGHT 32
 
-MatrixDriver matrix(PANEL_WIDTH, 32, MatrixDriver::ScanType::SCAN_16);
+MatrixDriver matrix(PANEL_WIDTH, PANEL_HEIGHT, MatrixDriver::ScanType::SCAN_16);
 
 char buffer[1024];
 
@@ -37,7 +38,7 @@ extern "C" int cpp_main(void) {
 
 #if DRAW == 1
 	for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
-		for (uint16_t row = 0; row < IMAGE_HEIGHT; row++) {
+		for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
 
 			uint8_t r, g, b;
 
@@ -50,7 +51,7 @@ extern "C" int cpp_main(void) {
 	}
 #elif DRAW == 2
 	for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
-		for (uint16_t row = 0; row < IMAGE_HEIGHT; row++) {
+		for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
 			uint8_t r = ((row == (pos / 64)) && (col == pos % 64)) ? 255 : 0;
 			uint8_t g =
 					((row == (pos / 64) + 1) && (col == pos % 64)) ? 255 : 0;
@@ -62,7 +63,7 @@ extern "C" int cpp_main(void) {
 	}
 #elif DRAW == 3
 		for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
-			for (uint16_t row = 0; row < IMAGE_HEIGHT; row++) {
+			for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
 				uint8_t r = IMAGE_DATA[col % IMAGE_WIDTH][row][0];
 				uint8_t g = IMAGE_DATA[col % IMAGE_WIDTH][row][1];
 				uint8_t b = IMAGE_DATA[col % IMAGE_WIDTH][row][2];
@@ -71,8 +72,8 @@ extern "C" int cpp_main(void) {
 			}
 		}
 #elif DRAW == 4
-	for (uint16_t col = 0; col < IMAGE_WIDTH; col++) {
-		for (uint16_t row = 0; row < IMAGE_HEIGHT; row++) {
+	for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
+		for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
 			uint8_t r = 0;
 			uint8_t g = 0;
 			uint8_t b = (col > 32) ? (row %2 == 0) ? 255 : 75 : 0;
@@ -106,7 +107,7 @@ extern "C" int cpp_main(void) {
 
 #if DRAW == 1
 			for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
-				for (uint16_t row = 0; row < IMAGE_HEIGHT; row++) {
+				for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
 
 					uint8_t r, g, b;
 
@@ -129,7 +130,7 @@ extern "C" int cpp_main(void) {
 //			pos = 65;
 
 			for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
-				for (uint16_t row = 0; row < IMAGE_HEIGHT; row++) {
+				for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
 
 					uint8_t r =
 							row == (pos / 64) && col == (pos % 64) ? 255 : 0;
@@ -152,8 +153,8 @@ extern "C" int cpp_main(void) {
 			matrix.SwapBuffer();
 #endif
 
-//			for (uint16_t row = 0; row < 32; row++) {
-//				for (uint16_t col = 0; col < 64; col++) {
+//			for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
+//				for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
 //					uint8_t r, g, b;
 //
 //					r = ((row + col + color_shift) % 4) == 0 ? 255 : 0;
