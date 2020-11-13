@@ -45,7 +45,7 @@ extern "C" int cpp_main(void) {
 
 			r = ((row + col + color_shift) % 4) == 0 ? 255 / col : 0;
 			g = ((row + col + color_shift) % 4) == 1 ? 255 / row : 0;
-			b = ((row + col + color_shift) % 4) == 2 ? 4 * col: 0;
+			b = ((row + col + color_shift) % 4) == 2 ? 4 * col : 0;
 
 			matrix.SetPixel(row, col, r, g, b);
 		}
@@ -102,26 +102,24 @@ extern "C" int cpp_main(void) {
 
 	while (1) {
 
-		uint32_t now = HAL_GetTick();
-
-		if ((now - lastUpdate) > 5) {
+//		HAL_Delay(5);
 
 #if DRAW == 1
-			for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
-				for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
+		for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
+			for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
 
-					uint8_t r, g, b;
+				uint8_t r, g, b;
 
-					r = ((row + col + color_shift) % 4) == 0 ? 255 : 0;
-					g = ((row + col + color_shift) % 4) == 1 ? 255 : 0;
-					b = ((row + col + color_shift) % 4) == 2 ? 255: 0;
+				r = ((row + col + color_shift) % 4) == 0 ? 255 : 0;
+				g = ((row + col + color_shift) % 4) == 1 ? 255 : 0;
+				b = ((row + col + color_shift) % 4) == 2 ? 255 : 0;
 
-					matrix.SetPixel(col, row, r, g, b);
-				}
+				matrix.SetPixel(col, row, r, g, b);
 			}
-			color_shift++;
+		}
+		color_shift++;
 
-			matrix.SwapBuffer();
+		matrix.SwapBuffer();
 
 #elif DRAW == 2
 			//pos 64:
@@ -165,8 +163,5 @@ extern "C" int cpp_main(void) {
 //					matrix.SetPixel(col, row, r, g, b);
 //				}
 //			}
-
-			lastUpdate = now;
-		}
 	}
 }

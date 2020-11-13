@@ -64,7 +64,7 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 	this->width = width;
 	this->height = height;
 	this->scanType = scanType;
-	this->planes = 1;
+	this->planes = 4;
 
 	this->planeSize = ((width * CYCLES_PER_PIXEL) * (height / 2))
 			+ ROW_END_CYCLES;

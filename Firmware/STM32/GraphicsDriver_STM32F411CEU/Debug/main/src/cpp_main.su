@@ -1,3 +1,3 @@
-cpp_main.cpp:31:16:int cpp_main()	56	static
-cpp_main.cpp:172:1:void __static_initialization_and_destruction_0(int, int)	16	static
-cpp_main.cpp:172:1:cpp)	8	static
+cpp_main.cpp:31:16:int cpp_main()	48	static
+cpp_main.cpp:167:1:void __static_initialization_and_destruction_0(int, int)	16	static
+cpp_main.cpp:167:1:cpp)	8	static
