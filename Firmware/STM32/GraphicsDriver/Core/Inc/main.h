@@ -62,8 +62,6 @@ void Error_Handler(void);
 #define Matrix_R0_GPIO_Port GPIOB
 #define Matrix_G0_Pin GPIO_PIN_1
 #define Matrix_G0_GPIO_Port GPIOB
-#define Matrix_B0_Pin GPIO_PIN_2
-#define Matrix_B0_GPIO_Port GPIOB
 #define Matrix_E_Pin GPIO_PIN_10
 #define Matrix_E_GPIO_Port GPIOB
 #define Matrix_OE_Pin GPIO_PIN_11
@@ -72,10 +70,8 @@ void Error_Handler(void);
 #define Matrix_LAT_GPIO_Port GPIOB
 #define Matrix_CLK_Pin GPIO_PIN_13
 #define Matrix_CLK_GPIO_Port GPIOB
-#define LED_8A_Pin GPIO_PIN_14
-#define LED_8A_GPIO_Port GPIOB
-#define LED_8B_Pin GPIO_PIN_15
-#define LED_8B_GPIO_Port GPIOB
+#define Matrix_B0_Pin GPIO_PIN_14
+#define Matrix_B0_GPIO_Port GPIOB
 #define Matrix_R1_Pin GPIO_PIN_3
 #define Matrix_R1_GPIO_Port GPIOB
 #define Matrix_G1_Pin GPIO_PIN_4

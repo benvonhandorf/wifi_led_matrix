@@ -1,6 +1,4 @@
-"Core/Src/cpp_main.o"
 "Core/Src/main.o"
-"Core/Src/matrix_driver.o"
 "Core/Src/stm32f1xx_hal_msp.o"
 "Core/Src/stm32f1xx_it.o"
 "Core/Src/syscalls.o"
@@ -23,3 +21,5 @@
 "Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_tim.o"
 "Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_tim_ex.o"
 "Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_uart.o"
+"devices/src/matrix_driver.o"
+"main/src/cpp_main.o"
