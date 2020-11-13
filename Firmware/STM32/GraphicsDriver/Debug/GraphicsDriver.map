@@ -3939,7 +3939,7 @@ OUTPUT(GraphicsDriver.elf elf32-littlearm)
  .debug_line    0x000000000000b01c      0xc0f devices/src/matrix_driver.o
  .debug_line    0x000000000000bc2b      0xabe main/src/cpp_main.o
 
-.debug_str      0x0000000000000000    0x8e213
+.debug_str      0x0000000000000000    0x8e212
  .debug_str     0x0000000000000000    0x85303 Core/Src/main.o
                                       0x8596f (size before relaxing)
  .debug_str     0x0000000000085303       0xe1 Core/Src/stm32f1xx_hal_msp.o
@@ -3976,8 +3976,8 @@ OUTPUT(GraphicsDriver.elf elf32-littlearm)
                                       0x850d3 (size before relaxing)
  .debug_str     0x000000000008d266      0xe39 devices/src/matrix_driver.o
                                       0x89dc0 (size before relaxing)
- .debug_str     0x000000000008e09f      0x174 main/src/cpp_main.o
-                                      0x89a89 (size before relaxing)
+ .debug_str     0x000000000008e09f      0x173 main/src/cpp_main.o
+                                      0x89a88 (size before relaxing)
 
 .comment        0x0000000000000000       0x7b
  .comment       0x0000000000000000       0x7b Core/Src/main.o

@@ -13,7 +13,7 @@ extern SPI_HandleTypeDef hspi1;
 
 extern UART_HandleTypeDef huart1;
 
-#define PANEL_WIDTH 128
+#define PANEL_WIDTH 64
 #define PANEL_HEIGHT 32
 
 MatrixDriver matrix(PANEL_WIDTH, PANEL_HEIGHT, MatrixDriver::ScanType::SCAN_16);

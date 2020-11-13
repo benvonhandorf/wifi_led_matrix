@@ -39,9 +39,9 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
  17 .debug_line   0000c6e9  00000000  00000000  0004f8cd  2**0
                   CONTENTS, READONLY, DEBUGGING
- 18 .debug_str    0008e213  00000000  00000000  0005bfb6  2**0
+ 18 .debug_str    0008e212  00000000  00000000  0005bfb6  2**0
                   CONTENTS, READONLY, DEBUGGING
- 19 .comment      0000007b  00000000  00000000  000ea1c9  2**0
+ 19 .comment      0000007b  00000000  00000000  000ea1c8  2**0
                   CONTENTS, READONLY
  20 .debug_frame  0000442c  00000000  00000000  000ea244  2**2
                   CONTENTS, READONLY, DEBUGGING
@@ -9134,15 +9134,16 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
  80031dc:	b2db      	uxtb	r3, r3
  80031de:	753b      	strb	r3, [r7, #20]
 
-		uint16_t rowSelects = SET_IF(previousRow & 0x01,
+		uint16_t rowSelects =
+				SET_IF(previousRow & 0x01,Matrix_A_Pin)
  80031e0:	7d3b      	ldrb	r3, [r7, #20]
  80031e2:	019b      	lsls	r3, r3, #6
-				Matrix_A_Pin) |SET_IF(previousRow & 0x02, Matrix_B_Pin)
+				|SET_IF(previousRow & 0x02, Matrix_B_Pin)
 				|SET_IF(previousRow & 0x04, Matrix_C_Pin)
 				|SET_IF(previousRow & 0x08, Matrix_D_Pin)
 				|SET_IF(previousRow & 0x10, Matrix_E_Pin);
  80031e4:	b29b      	uxth	r3, r3
-		uint16_t rowSelects = SET_IF(previousRow & 0x01,
+		uint16_t rowSelects =
  80031e6:	f3c3 030a 	ubfx	r3, r3, #0, #11
  80031ea:	827b      	strh	r3, [r7, #18]
 
@@ -9252,15 +9253,16 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
  800329c:	3301      	adds	r3, #1
  800329e:	81fb      	strh	r3, [r7, #14]
 
-			uint16_t currentRowSelects = SET_IF(y & 0x01,
+			uint16_t currentRowSelects =
+					SET_IF(y & 0x01,Matrix_A_Pin)
  80032a0:	7dfb      	ldrb	r3, [r7, #23]
  80032a2:	019b      	lsls	r3, r3, #6
-					Matrix_A_Pin) |SET_IF(y & 0x02, Matrix_B_Pin)
+					|SET_IF(y & 0x02, Matrix_B_Pin)
 					|SET_IF(y & 0x04, Matrix_C_Pin)
 					|SET_IF(y & 0x08, Matrix_D_Pin)
 					|SET_IF(y & 0x10, Matrix_E_Pin);
  80032a4:	b29b      	uxth	r3, r3
-			uint16_t currentRowSelects = SET_IF(y & 0x01,
+			uint16_t currentRowSelects =
  80032a6:	f3c3 030a 	ubfx	r3, r3, #0, #11
  80032aa:	81bb      	strh	r3, [r7, #12]
 
@@ -10209,7 +10211,7 @@ extern "C" int cpp_main(void) {
  8003918:	2300      	movs	r3, #0
  800391a:	84bb      	strh	r3, [r7, #36]	; 0x24
  800391c:	8cbb      	ldrh	r3, [r7, #36]	; 0x24
- 800391e:	2b7f      	cmp	r3, #127	; 0x7f
+ 800391e:	2b3f      	cmp	r3, #63	; 0x3f
  8003920:	d855      	bhi.n	80039ce <cpp_main+0xd6>
 		for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
  8003922:	2300      	movs	r3, #0
@@ -10370,7 +10372,7 @@ extern "C" int cpp_main(void) {
  8003a2e:	2300      	movs	r3, #0
  8003a30:	843b      	strh	r3, [r7, #32]
  8003a32:	8c3b      	ldrh	r3, [r7, #32]
- 8003a34:	2b7f      	cmp	r3, #127	; 0x7f
+ 8003a34:	2b3f      	cmp	r3, #63	; 0x3f
  8003a36:	d84a      	bhi.n	8003ace <cpp_main+0x1d6>
 				for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
  8003a38:	2300      	movs	r3, #0
@@ -10499,7 +10501,7 @@ extern "C" int cpp_main(void) {
 MatrixDriver matrix(PANEL_WIDTH, PANEL_HEIGHT, MatrixDriver::ScanType::SCAN_16);
  8003b16:	2300      	movs	r3, #0
  8003b18:	2220      	movs	r2, #32
- 8003b1a:	2180      	movs	r1, #128	; 0x80
+ 8003b1a:	2140      	movs	r1, #64	; 0x40
  8003b1c:	4803      	ldr	r0, [pc, #12]	; (8003b2c <_Z41__static_initialization_and_destruction_0ii+0x30>)
  8003b1e:	f7ff faf1 	bl	8003104 <_ZN12MatrixDriverC1EhhNS_8ScanTypeE>
 }

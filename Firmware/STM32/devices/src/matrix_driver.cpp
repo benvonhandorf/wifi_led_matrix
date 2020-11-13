@@ -78,8 +78,9 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 
 		uint8_t previousRow = y == 0 ? (height / 2) - 1 : y - 1;
 
-		uint16_t rowSelects = SET_IF(previousRow & 0x01,
-				Matrix_A_Pin) |SET_IF(previousRow & 0x02, Matrix_B_Pin)
+		uint16_t rowSelects =
+				SET_IF(previousRow & 0x01,Matrix_A_Pin)
+				|SET_IF(previousRow & 0x02, Matrix_B_Pin)
 				|SET_IF(previousRow & 0x04, Matrix_C_Pin)
 				|SET_IF(previousRow & 0x08, Matrix_D_Pin)
 				|SET_IF(previousRow & 0x10, Matrix_E_Pin);
@@ -102,8 +103,9 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 					| rowSelects;
 			offset++;
 
-			uint16_t currentRowSelects = SET_IF(y & 0x01,
-					Matrix_A_Pin) |SET_IF(y & 0x02, Matrix_B_Pin)
+			uint16_t currentRowSelects =
+					SET_IF(y & 0x01,Matrix_A_Pin)
+					|SET_IF(y & 0x02, Matrix_B_Pin)
 					|SET_IF(y & 0x04, Matrix_C_Pin)
 					|SET_IF(y & 0x08, Matrix_D_Pin)
 					|SET_IF(y & 0x10, Matrix_E_Pin);
