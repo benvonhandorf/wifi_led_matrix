@@ -1,14 +1,13 @@
-matrix_driver.cpp:46:6:void DMA_Complete(DMA_HandleTypeDef*)	16	static
-matrix_driver.cpp:50:6:void DMA_Abort(DMA_HandleTypeDef*)	16	static
-matrix_driver.cpp:54:6:void DMA_Error(DMA_HandleTypeDef*)	16	static
-matrix_driver.cpp:60:6:void DMA_HalfComplete(DMA_HandleTypeDef*)	16	static
-matrix_driver.cpp:67:10:uint16_t MatrixDriver::BufferOffset(uint8_t, uint8_t, uint8_t)	24	static
-matrix_driver.cpp:78:1:MatrixDriver::MatrixDriver(uint8_t, uint8_t, MatrixDriver::ScanType)	32	static
-matrix_driver.cpp:144:6:void MatrixDriver::open()	40	static
-matrix_driver.cpp:168:6:void MatrixDriver::close()	16	static
-matrix_driver.cpp:176:9:uint8_t MatrixDriver::PlaneBits(uint8_t)	24	static
-matrix_driver.cpp:202:6:void MatrixDriver::Dump()	136	static
-matrix_driver.cpp:287:6:void MatrixDriver::SetPixel(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t)	48	static
-matrix_driver.cpp:331:6:void MatrixDriver::SwapBuffer()	16	static
-matrix_driver.cpp:337:6:void MatrixDriver::Handle()	24	static
-matrix_driver.cpp:361:6:void MatrixDriver::StartNextDma()	40	static
+matrix_driver.cpp:47:6:void DMA_Complete(DMA_HandleTypeDef*)	16	static
+matrix_driver.cpp:51:6:void DMA_Abort(DMA_HandleTypeDef*)	16	static
+matrix_driver.cpp:55:6:void DMA_Error(DMA_HandleTypeDef*)	16	static
+matrix_driver.cpp:62:10:uint16_t MatrixDriver::BufferOffset(uint8_t, uint8_t, uint8_t)	24	static
+matrix_driver.cpp:73:1:MatrixDriver::MatrixDriver(uint8_t, uint8_t, MatrixDriver::ScanType)	32	static
+matrix_driver.cpp:139:6:void MatrixDriver::open()	40	static
+matrix_driver.cpp:162:6:void MatrixDriver::close()	16	static
+matrix_driver.cpp:170:9:uint8_t MatrixDriver::PlaneBits(uint8_t)	24	static
+matrix_driver.cpp:192:6:void MatrixDriver::Dump()	136	static
+matrix_driver.cpp:277:6:void MatrixDriver::SetPixel(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t)	72	static
+matrix_driver.cpp:321:6:void MatrixDriver::SwapBuffer()	16	static
+matrix_driver.cpp:327:6:void MatrixDriver::Handle()	24	static
+matrix_driver.cpp:355:6:void MatrixDriver::StartNextDma()	32	static

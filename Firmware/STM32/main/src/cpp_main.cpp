@@ -52,10 +52,27 @@ extern "C" int cpp_main(void) {
 
 #elif DRAW == 4
 
-	matrix.SetPixel(0, 0, 0, 255, 0);
+	matrix.SetPixel(0, 0, 255, 0, 0);
 	matrix.SetPixel(PANEL_WIDTH - 1, 0, 255, 0, 0);
 	matrix.SetPixel(0, PANEL_HEIGHT - 1, 255, 0, 0);
 	matrix.SetPixel(PANEL_WIDTH - 1, PANEL_HEIGHT - 1, 255, 0, 0);
+
+	matrix.SetPixel(32, 9, 255, 255, 255);
+#elif DRAW == 5
+
+	uint8_t colVal = 255 / PANEL_WIDTH;
+
+	for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
+		HAL_IWDG_Refresh(&hiwdg);
+
+		for (uint16_t row = PANEL_HEIGHT - 1; row < PANEL_HEIGHT; row++) {
+			uint8_t r = colVal * col; //(row % 4) == 0 ? colVal * col : 0;
+			uint8_t g = 0;//((row + 1) % 4) == 0 ? colVal * col : 0;
+			uint8_t b = 0;//((row + 2) % 4) == 0 ? colVal * col : 0;
+
+			matrix.SetPixel(col, row, r, g, b);
+		}
+	}
 #endif
 
 	lastUpdate = HAL_GetTick();
@@ -119,7 +136,7 @@ extern "C" int cpp_main(void) {
 			}
 			pos++;
 
-			if (pos > (IMAGE_WIDTH /* IMAGE_HEIGHT*/)) {
+			if (pos > (IMAGE_WIDTH * IMAGE_HEIGHT)) {
 				pos = 0;
 			}
 

@@ -16,6 +16,7 @@
 
 #define LINE_MASK (SET_SHIFT(A_SHIFT) | SET_SHIFT(B_SHIFT) | SET_SHIFT(C_SHIFT) | SET_SHIFT(D_SHIFT) | SET_SHIFT(E_SHIFT) )
 
+#define PLANES 4
 #define CYCLES_PER_PIXEL 2
 #define ROW_END_CYCLES 4
 
@@ -52,17 +53,11 @@ void DMA_Abort(DMA_HandleTypeDef *hdma) {
 }
 
 void DMA_Error(DMA_HandleTypeDef *hdma) {
-	sprintf(buffer, "DE - %d %d\n", hdma_tim1_ch1.State, hdma_tim1_ch1.ErrorCode);
+	sprintf(buffer, "DE - %d %d\n", hdma_tim1_ch1.State,
+			hdma_tim1_ch1.ErrorCode);
 
 	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
 }
-
-void DMA_HalfComplete(DMA_HandleTypeDef *hdma) {
-	sprintf(buffer, "DH\n");
-
-	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
-}
-
 
 uint16_t MatrixDriver::BufferOffset(uint8_t x, uint8_t y, uint8_t plane) {
 	uint16_t rowEntry = y % (height / 2);
@@ -79,7 +74,7 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 	this->width = width;
 	this->height = height;
 	this->scanType = scanType;
-	this->planes = 8;
+	this->planes = PLANES;
 
 	this->planeSize = ((width * CYCLES_PER_PIXEL) + ROW_END_CYCLES)
 			* (height / 2);
@@ -150,7 +145,6 @@ void MatrixDriver::open() {
 	hdma_tim1_ch1.XferAbortCallback = DMA_Abort;
 	hdma_tim1_ch1.XferCpltCallback = DMA_Complete;
 	hdma_tim1_ch1.XferErrorCallback = DMA_Error;
-	hdma_tim1_ch1.XferHalfCpltCallback = DMA_HalfComplete;
 
 	__HAL_TIM_ENABLE_DMA(&htim1, TIM_DMA_CC1);
 
@@ -174,29 +168,25 @@ void MatrixDriver::close() {
 }
 
 uint8_t MatrixDriver::PlaneBits(uint8_t value) {
-	uint8_t result = value;
-
-//	if (value > 127) {
-//		result |= 0x08;
-//		value -= 127;
-//	}
-//
-//	if (value > 64) {
-//		result |= 0x04;
-//		value -= 32;
-//	}
-//
-//	if (value > 32) {
-//		result |= 0x02;
-//		value -= 8;
-//	}
-//
-//	if (value > 16) {
-//		result |= 0x01;
-//		value -= 16;
-//	}
+#if PLANES == 8
+	return value;
+#elif PLANES == 4
+	uint8_t result =
+			(value > 128 ? 0x08 : 0x00) |
+			(value > 64 ? 0x04 : 0x00) |
+			(value > 32 ? 0x02 : 0x00) |
+			(value > 0 ? 0x01 : 0x00) ;
 
 	return result;
+#elif PLANES == 2
+	uint8_t result =
+			(value > 128 ? 0x02 : 0x00) |
+			(value > 0 ? 0x01 : 0x00) ;
+
+	return result;
+#elif PLANES == 1
+	return value > 0 ? 0x01 : 0x00;
+#endif
 }
 
 void MatrixDriver::Dump() {
@@ -307,12 +297,12 @@ void MatrixDriver::SetPixel(uint8_t x, uint8_t y, uint8_t r, uint8_t g,
 	uint8_t gPlanes = PlaneBits(g);
 	uint8_t bPlanes = PlaneBits(b);
 
-//	sprintf(buffer,
-//			"%02u, %02u : %02x %02x %02x %04x\n",
-//			x, y, rPlanes, gPlanes, bPlanes, pixelMask);
-//
-//	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer),
-//			10);
+	sprintf(buffer,
+			"%02u, %02u : %02x %02x %02x %04x\n",
+			x, y, rPlanes, gPlanes, bPlanes, pixelMask);
+
+	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer),
+			10);
 
 	for (int plane = 0; plane < planes; plane++) {
 		uint16_t planePixelBits = ((rPlanes & (0x01 << plane)) ? rBit : 0)
@@ -356,7 +346,11 @@ void MatrixDriver::Handle() {
 
 }
 
+#if PLANES == 8
 uint8_t const AAR_BY_PLANE[] = { 1, 2, 4, 8, 16, 32, 64 };
+#elif PLANES == 4
+uint8_t const AAR_BY_PLANE[] = { 1, 8, 16, 28 };
+#endif
 
 void MatrixDriver::StartNextDma() {
 	uint16_t plane = nextDmaOffset / planeSize;
@@ -366,8 +360,9 @@ void MatrixDriver::StartNextDma() {
 	htim1.Instance->ARR = AAR_BY_PLANE[plane];
 	htim1.Instance->EGR = TIM_EGR_UG;
 
-	if(hdma_tim1_ch1.State != HAL_DMA_STATE_READY) {
-		sprintf(buffer, "DS - %d %d\n", hdma_tim1_ch1.State, hdma_tim1_ch1.ErrorCode);
+	if (hdma_tim1_ch1.State != HAL_DMA_STATE_READY) {
+		sprintf(buffer, "DS - %d %l\n", hdma_tim1_ch1.State,
+				hdma_tim1_ch1.ErrorCode);
 
 		HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
 	}
@@ -380,5 +375,10 @@ void MatrixDriver::StartNextDma() {
 	if (nextDmaOffset >= bufferSize) {
 		nextDmaOffset = 0;
 	}
+
+#ifdef DebugPin_GPIO_Port
+	HAL_GPIO_WritePin(DebugPin_GPIO_Port, DebugPin_Pin,
+			plane & 0x01 ? GPIO_PIN_SET : GPIO_PIN_RESET);
+#endif
 }
 
