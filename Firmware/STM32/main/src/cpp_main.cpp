@@ -26,7 +26,7 @@ uint32_t lastUpdate = 0;
 //2 - advancing pixel
 //3 - image
 //4 - Debugging
-#define DRAW 1
+#define DRAW 3
 
 extern "C" int cpp_main(void) {
 	__HAL_DBGMCU_FREEZE_IWDG();
@@ -37,32 +37,7 @@ extern "C" int cpp_main(void) {
 
 	uint16_t pos = 0;
 
-#if DRAW == 1
-	for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
-		for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
-
-			uint8_t r, g, b;
-
-			r = ((row + col + color_shift) % 4) == 0 ? 255 / col : 0;
-			g = ((row + col + color_shift) % 4) == 1 ? 255 / row : 0;
-			b = ((row + col + color_shift) % 4) == 2 ? 4 * col : 0;
-
-			matrix.SetPixel(row, col, r, g, b);
-		}
-	}
-#elif DRAW == 2
-	for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
-		for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
-			uint8_t r = ((row == (pos / 64)) && (col == pos % 64)) ? 255 : 0;
-			uint8_t g =
-					((row == (pos / 64) + 1) && (col == pos % 64)) ? 255 : 0;
-			uint8_t b =
-					((row == (pos / 64) + 2) && (col == pos % 64)) ? 255 : 0;
-
-			matrix.SetPixel(col, row, r, g, b);
-		}
-	}
-#elif DRAW == 3
+#if DRAW == 3
 	for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
 		for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
 			uint8_t r = IMAGE_DATA[col % IMAGE_WIDTH][row][0];
@@ -73,22 +48,18 @@ extern "C" int cpp_main(void) {
 		}
 	}
 #elif DRAW == 4
-	for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
-		for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
-			uint8_t r = 0;
-			uint8_t g = 0;
-			uint8_t b = (col > 32) ? (row %2 == 0) ? 255 : 75 : 0;
 
-			matrix.SetPixel(col, row, r, g, b);
-		}
-	}
+	matrix.SetPixel(0, 0, 0, 255, 0);
+//	matrix.SetPixel(PANEL_WIDTH - 1, 0, 255, 0, 0);
+//	matrix.SetPixel(0, PANEL_HEIGHT - 1, 255, 0, 0);
+//	matrix.SetPixel(PANEL_WIDTH - 1, PANEL_HEIGHT - 1, 255, 0, 0);
 #endif
 
 	lastUpdate = HAL_GetTick();
 
 	color_shift++;
 
-	matrix.Dump();
+//	matrix.Dump();
 
 	matrix.SwapBuffer();
 

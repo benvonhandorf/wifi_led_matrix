@@ -53,9 +53,13 @@ void DMA_Abort(DMA_HandleTypeDef *hdma) {
 }
 
 uint16_t MatrixDriver::BufferOffset(uint8_t x, uint8_t y, uint8_t plane) {
+	uint16_t rowEntry = y % (height / 2);
+	uint16_t rowOffset = rowEntry * ((width * CYCLES_PER_PIXEL) + ROW_END_CYCLES);
+	uint16_t offsetInRow = x * CYCLES_PER_PIXEL;
+
 	return (plane * planeSize)
-			+ ((y % (height / 2)) * ((width * CYCLES_PER_PIXEL) + ROW_END_CYCLES))
-			+ (x * CYCLES_PER_PIXEL);
+			+ rowOffset
+			+ offsetInRow;
 }
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
@@ -64,10 +68,9 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 	this->width = width;
 	this->height = height;
 	this->scanType = scanType;
-	this->planes = 4;
+	this->planes = 8;
 
-	this->planeSize = ((width * CYCLES_PER_PIXEL) * (height / 2))
-			+ ROW_END_CYCLES;
+	this->planeSize = ((width * CYCLES_PER_PIXEL) + ROW_END_CYCLES) * (height / 2);
 	this->bufferSize = planeSize * planes;
 
 	this->sendBufferA = true;
@@ -90,8 +93,11 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 
 				uint16_t offset = BufferOffset(x, y, plane);
 
-				bufferA[offset] = bufferB[offset] = rowSelects;
-				bufferA[offset + 1] = bufferB[offset + 1] = rowSelects
+				bufferA[offset] = rowSelects;
+				bufferB[offset] = rowSelects;
+				bufferA[offset + 1] = rowSelects
+						| Matrix_CLK_Pin;
+				bufferB[offset + 1] = rowSelects
 						| Matrix_CLK_Pin;
 			}
 
@@ -99,6 +105,7 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 			//Disable outputs
 			uint16_t offset = BufferOffset(width - 1, y,
 					plane) + CYCLES_PER_PIXEL;
+
 			bufferA[offset] = bufferB[offset] = Matrix_OE_Pin
 					| rowSelects;
 			offset++;
@@ -157,27 +164,27 @@ void MatrixDriver::close() {
 }
 
 uint8_t MatrixDriver::PlaneBits(uint8_t value) {
-	uint8_t result = 0x00;
+	uint8_t result = value;
 
-	if (value > 127) {
-		result |= 0x08;
-		value -= 127;
-	}
-
-	if (value > 64) {
-		result |= 0x04;
-		value -= 32;
-	}
-
-	if (value > 32) {
-		result |= 0x02;
-		value -= 8;
-	}
-
-	if (value > 16) {
-		result |= 0x01;
-		value -= 16;
-	}
+//	if (value > 127) {
+//		result |= 0x08;
+//		value -= 127;
+//	}
+//
+//	if (value > 64) {
+//		result |= 0x04;
+//		value -= 32;
+//	}
+//
+//	if (value > 32) {
+//		result |= 0x02;
+//		value -= 8;
+//	}
+//
+//	if (value > 16) {
+//		result |= 0x01;
+//		value -= 16;
+//	}
 
 	return result;
 }
@@ -188,7 +195,7 @@ void MatrixDriver::Dump() {
 	for (uint16_t offset = 0; offset < bufferSize; offset++) {
 		uint16_t val = outputBuffer[offset];
 
-		if (val & Matrix_LAT_Pin || val & Matrix_OE_Pin) {
+//		if (val & Matrix_LAT_Pin || val & Matrix_OE_Pin) {
 			uint8_t r0, g0, b0, r1, g1, b1, a, b, c, d, lat, oe, clk;
 
 			r0 = (val & Matrix_R0_Pin) > 0;
@@ -196,8 +203,8 @@ void MatrixDriver::Dump() {
 			b0 = (val & Matrix_B0_Pin) > 0;
 
 			r1 = (val & Matrix_R1_Pin) > 0;
-			g1 = (val & Matrix_G0_Pin) > 0;
-			b1 = (val & Matrix_B0_Pin) > 0;
+			g1 = (val & Matrix_G1_Pin) > 0;
+			b1 = (val & Matrix_B1_Pin) > 0;
 
 			a = (val & Matrix_A_Pin) > 0;
 			b = (val & Matrix_B_Pin) > 0;
@@ -210,12 +217,14 @@ void MatrixDriver::Dump() {
 
 			uint8_t rowVal = a | b << 1 | c << 2 | d << 3;
 
+			if(g0 != 0) {
+
 			sprintf(buffer,
 					"%04u : %02x - %x %x %x - %x %x %x @ %x %x %x %x - %d - %u - %u - %u\n",
 					offset, val, r0, g0, b0, r1, g1, b1, a, b, c, d,
 					rowVal, lat, oe, clk);
 
-			HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
+			HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 40);
 		}
 
 	}
@@ -312,6 +321,8 @@ void MatrixDriver::SwapBuffer() {
 	sendBufferA = !sendBufferA;
 
 	completeSwap = true;
+
+	nextDmaOffset = 0;
 
 	HAL_DMA_Abort_IT(&hdma_tim1_ch1);
 }
