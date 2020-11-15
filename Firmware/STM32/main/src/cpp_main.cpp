@@ -39,20 +39,23 @@ extern "C" int cpp_main(void) {
 
 #if DRAW == 3
 	for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
+		HAL_IWDG_Refresh(&hiwdg);
+
 		for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
-			uint8_t r = IMAGE_DATA[col % IMAGE_WIDTH][row][0];
-			uint8_t g = IMAGE_DATA[col % IMAGE_WIDTH][row][1];
-			uint8_t b = IMAGE_DATA[col % IMAGE_WIDTH][row][2];
+			uint8_t r = IMAGE_DATA[col % IMAGE_WIDTH][row % IMAGE_HEIGHT][0];
+			uint8_t g = IMAGE_DATA[col % IMAGE_WIDTH][row % IMAGE_HEIGHT][1];
+			uint8_t b = IMAGE_DATA[col % IMAGE_WIDTH][row % IMAGE_HEIGHT][2];
 
 			matrix.SetPixel(col, row, r, g, b);
 		}
 	}
+
 #elif DRAW == 4
 
 	matrix.SetPixel(0, 0, 0, 255, 0);
-//	matrix.SetPixel(PANEL_WIDTH - 1, 0, 255, 0, 0);
-//	matrix.SetPixel(0, PANEL_HEIGHT - 1, 255, 0, 0);
-//	matrix.SetPixel(PANEL_WIDTH - 1, PANEL_HEIGHT - 1, 255, 0, 0);
+	matrix.SetPixel(PANEL_WIDTH - 1, 0, 255, 0, 0);
+	matrix.SetPixel(0, PANEL_HEIGHT - 1, 255, 0, 0);
+	matrix.SetPixel(PANEL_WIDTH - 1, PANEL_HEIGHT - 1, 255, 0, 0);
 #endif
 
 	lastUpdate = HAL_GetTick();

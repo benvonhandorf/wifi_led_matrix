@@ -72,6 +72,8 @@ void Error_Handler(void);
 #define Matrix_LAT_GPIO_Port GPIOB
 #define Matrix_OE_Pin GPIO_PIN_14
 #define Matrix_OE_GPIO_Port GPIOB
+#define DebugPin_Pin GPIO_PIN_11
+#define DebugPin_GPIO_Port GPIOA
 #define Matrix_C_Pin GPIO_PIN_3
 #define Matrix_C_GPIO_Port GPIOB
 #define Matrix_B_Pin GPIO_PIN_4

@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <string.h>
 
-
 #define SET_IF(cond, x) (cond ? x : 0)
 #define RESET_SHIFT(x) (x << 16)
 #define BSRR_IF(cond, x) (cond ? x : RESET_SHIFT(x))
@@ -52,14 +51,26 @@ void DMA_Abort(DMA_HandleTypeDef *hdma) {
 	instance->Handle();
 }
 
+void DMA_Error(DMA_HandleTypeDef *hdma) {
+	sprintf(buffer, "DE - %d %d\n", hdma_tim1_ch1.State, hdma_tim1_ch1.ErrorCode);
+
+	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
+}
+
+void DMA_HalfComplete(DMA_HandleTypeDef *hdma) {
+	sprintf(buffer, "DH\n");
+
+	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
+}
+
+
 uint16_t MatrixDriver::BufferOffset(uint8_t x, uint8_t y, uint8_t plane) {
 	uint16_t rowEntry = y % (height / 2);
-	uint16_t rowOffset = rowEntry * ((width * CYCLES_PER_PIXEL) + ROW_END_CYCLES);
+	uint16_t rowOffset = rowEntry
+			* ((width * CYCLES_PER_PIXEL) + ROW_END_CYCLES);
 	uint16_t offsetInRow = x * CYCLES_PER_PIXEL;
 
-	return (plane * planeSize)
-			+ rowOffset
-			+ offsetInRow;
+	return (plane * planeSize) + rowOffset + offsetInRow;
 }
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
@@ -70,7 +81,8 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 	this->scanType = scanType;
 	this->planes = 8;
 
-	this->planeSize = ((width * CYCLES_PER_PIXEL) + ROW_END_CYCLES) * (height / 2);
+	this->planeSize = ((width * CYCLES_PER_PIXEL) + ROW_END_CYCLES)
+			* (height / 2);
 	this->bufferSize = planeSize * planes;
 
 	this->sendBufferA = true;
@@ -82,8 +94,8 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 		uint8_t previousRow = y == 0 ? (height / 2) - 1 : y - 1;
 
 		uint16_t rowSelects =
-				SET_IF(previousRow & 0x01,Matrix_A_Pin)
-				|SET_IF(previousRow & 0x02, Matrix_B_Pin)
+		SET_IF(previousRow & 0x01,
+				Matrix_A_Pin) |SET_IF(previousRow & 0x02, Matrix_B_Pin)
 				|SET_IF(previousRow & 0x04, Matrix_C_Pin)
 				|SET_IF(previousRow & 0x08, Matrix_D_Pin)
 				|SET_IF(previousRow & 0x10, Matrix_E_Pin);
@@ -95,10 +107,8 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 
 				bufferA[offset] = rowSelects;
 				bufferB[offset] = rowSelects;
-				bufferA[offset + 1] = rowSelects
-						| Matrix_CLK_Pin;
-				bufferB[offset + 1] = rowSelects
-						| Matrix_CLK_Pin;
+				bufferA[offset + 1] = rowSelects | Matrix_CLK_Pin;
+				bufferB[offset + 1] = rowSelects | Matrix_CLK_Pin;
 			}
 
 			//Setup the final bytes for the row, staring with the output after the last pixel on the current row & plane
@@ -106,20 +116,18 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 			uint16_t offset = BufferOffset(width - 1, y,
 					plane) + CYCLES_PER_PIXEL;
 
-			bufferA[offset] = bufferB[offset] = Matrix_OE_Pin
-					| rowSelects;
+			bufferA[offset] = bufferB[offset] = Matrix_OE_Pin | rowSelects;
 			offset++;
 
 			uint16_t currentRowSelects =
-					SET_IF(y & 0x01,Matrix_A_Pin)
-					|SET_IF(y & 0x02, Matrix_B_Pin)
-					|SET_IF(y & 0x04, Matrix_C_Pin)
-					|SET_IF(y & 0x08, Matrix_D_Pin)
-					|SET_IF(y & 0x10, Matrix_E_Pin);
+			SET_IF(y & 0x01, Matrix_A_Pin) |SET_IF(y & 0x02, Matrix_B_Pin)
+			|SET_IF(y & 0x04, Matrix_C_Pin)
+			|SET_IF(y & 0x08, Matrix_D_Pin)
+			|SET_IF(y & 0x10, Matrix_E_Pin);
 
 			//Latch data, select next row, outputs still off
-			bufferA[offset] = bufferB[offset] = Matrix_LAT_Pin
-					| Matrix_OE_Pin | currentRowSelects;
+			bufferA[offset] = bufferB[offset] = Matrix_LAT_Pin | Matrix_OE_Pin
+					| currentRowSelects;
 
 			offset++;
 			bufferA[offset] = bufferB[offset] = currentRowSelects;
@@ -141,6 +149,8 @@ void MatrixDriver::open() {
 
 	hdma_tim1_ch1.XferAbortCallback = DMA_Abort;
 	hdma_tim1_ch1.XferCpltCallback = DMA_Complete;
+	hdma_tim1_ch1.XferErrorCallback = DMA_Error;
+	hdma_tim1_ch1.XferHalfCpltCallback = DMA_HalfComplete;
 
 	__HAL_TIM_ENABLE_DMA(&htim1, TIM_DMA_CC1);
 
@@ -192,39 +202,41 @@ uint8_t MatrixDriver::PlaneBits(uint8_t value) {
 void MatrixDriver::Dump() {
 	uint16_t *outputBuffer = sendBufferA ? bufferB : bufferA;
 
-	for (uint16_t offset = 0; offset < bufferSize; offset++) {
+	for (uint16_t offset = 14784; offset < bufferSize; offset++) {
+		HAL_IWDG_Refresh(&hiwdg);
+
 		uint16_t val = outputBuffer[offset];
 
 //		if (val & Matrix_LAT_Pin || val & Matrix_OE_Pin) {
-			uint8_t r0, g0, b0, r1, g1, b1, a, b, c, d, lat, oe, clk;
+		uint8_t r0, g0, b0, r1, g1, b1, a, b, c, d, lat, oe, clk;
 
-			r0 = (val & Matrix_R0_Pin) > 0;
-			g0 = (val & Matrix_G0_Pin) > 0;
-			b0 = (val & Matrix_B0_Pin) > 0;
+		r0 = (val & Matrix_R0_Pin) > 0;
+		g0 = (val & Matrix_G0_Pin) > 0;
+		b0 = (val & Matrix_B0_Pin) > 0;
 
-			r1 = (val & Matrix_R1_Pin) > 0;
-			g1 = (val & Matrix_G1_Pin) > 0;
-			b1 = (val & Matrix_B1_Pin) > 0;
+		r1 = (val & Matrix_R1_Pin) > 0;
+		g1 = (val & Matrix_G1_Pin) > 0;
+		b1 = (val & Matrix_B1_Pin) > 0;
 
-			a = (val & Matrix_A_Pin) > 0;
-			b = (val & Matrix_B_Pin) > 0;
-			c = (val & Matrix_C_Pin) > 0;
-			d = (val & Matrix_D_Pin) > 0;
+		a = (val & Matrix_A_Pin) > 0;
+		b = (val & Matrix_B_Pin) > 0;
+		c = (val & Matrix_C_Pin) > 0;
+		d = (val & Matrix_D_Pin) > 0;
 
-			lat = (val & Matrix_LAT_Pin) > 0;
-			oe = (val & Matrix_OE_Pin) > 0;
-			clk = (val & Matrix_CLK_Pin) > 0;
+		lat = (val & Matrix_LAT_Pin) > 0;
+		oe = (val & Matrix_OE_Pin) > 0;
+		clk = (val & Matrix_CLK_Pin) > 0;
 
-			uint8_t rowVal = a | b << 1 | c << 2 | d << 3;
+		uint8_t rowVal = a | b << 1 | c << 2 | d << 3;
 
-			if(g0 != 0) {
+		if (r0 != 0) {
 
 			sprintf(buffer,
-					"%04u : %02x - %x %x %x - %x %x %x @ %x %x %x %x - %d - %u - %u - %u\n",
-					offset, val, r0, g0, b0, r1, g1, b1, a, b, c, d,
-					rowVal, lat, oe, clk);
+					"%04u : %04x - %x %x %x - %x %x %x @ %x %x %x %x - %d - %u - %u - %u\n",
+					offset, val, r0, g0, b0, r1, g1, b1, a, b, c, d, rowVal,
+					lat, oe, clk);
 
-			HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 40);
+			HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 50);
 		}
 
 	}
@@ -295,18 +307,17 @@ void MatrixDriver::SetPixel(uint8_t x, uint8_t y, uint8_t r, uint8_t g,
 	uint8_t gPlanes = PlaneBits(g);
 	uint8_t bPlanes = PlaneBits(b);
 
+//	sprintf(buffer,
+//			"%02u, %02u : %02x %02x %02x %04x\n",
+//			x, y, rPlanes, gPlanes, bPlanes, pixelMask);
+//
+//	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer),
+//			10);
+
 	for (int plane = 0; plane < planes; plane++) {
-		uint16_t planePixelBits = (
-				(rPlanes & (0x01 << plane)) ? rBit : 0)
+		uint16_t planePixelBits = ((rPlanes & (0x01 << plane)) ? rBit : 0)
 				| ((gPlanes & (0x01 << plane)) ? gBit : 0)
 				| ((bPlanes & (0x01 << plane)) ? bBit : 0);
-
-//		sprintf(buffer,
-//				"%02u, %02u : %02x %02x %02x %04x %04x\n",
-//				x, y, rPlanes, gPlanes, bPlanes, planePixelBits, pixelMask);
-
-//		HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer),
-//				10);
 
 		uint16_t offset = BufferOffset(x, y, plane);
 
@@ -318,11 +329,7 @@ void MatrixDriver::SetPixel(uint8_t x, uint8_t y, uint8_t r, uint8_t g,
 }
 
 void MatrixDriver::SwapBuffer() {
-	sendBufferA = !sendBufferA;
-
 	completeSwap = true;
-
-	nextDmaOffset = 0;
 
 	HAL_DMA_Abort_IT(&hdma_tim1_ch1);
 }
@@ -330,11 +337,23 @@ void MatrixDriver::SwapBuffer() {
 void MatrixDriver::Handle() {
 	HAL_IWDG_Refresh(&hiwdg);
 
+	bool cloneBuffer = completeSwap;
+
 	if (completeSwap) {
 		completeSwap = false;
+		sendBufferA = !sendBufferA;
+		nextDmaOffset = 0;
 	}
 
 	StartNextDma();
+
+//	if (cloneBuffer) {
+//		uint16_t *outputBuffer = (sendBufferA ? bufferA : bufferB);
+//		uint16_t *targetBuffer = (!sendBufferA ? bufferA : bufferB);
+//
+//		memcpy(targetBuffer, outputBuffer, bufferSize * 2);
+//	}
+
 }
 
 uint8_t const AAR_BY_PLANE[] = { 1, 2, 4, 8, 16, 32, 64 };
@@ -342,16 +361,23 @@ uint8_t const AAR_BY_PLANE[] = { 1, 2, 4, 8, 16, 32, 64 };
 void MatrixDriver::StartNextDma() {
 	uint16_t plane = nextDmaOffset / planeSize;
 	uint16_t *outputBuffer = (sendBufferA ? bufferA : bufferB);
+	uint16_t *ouputOffset = outputBuffer + (plane * planeSize);
 
 	htim1.Instance->ARR = AAR_BY_PLANE[plane];
 	htim1.Instance->EGR = TIM_EGR_UG;
 
-	HAL_DMA_Start_IT(&hdma_tim1_ch1, (uint32_t) outputBuffer,
+	if(hdma_tim1_ch1.State != HAL_DMA_STATE_READY) {
+		sprintf(buffer, "DS - %d %d\n", hdma_tim1_ch1.State, hdma_tim1_ch1.ErrorCode);
+
+		HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
+	}
+
+	HAL_DMA_Start_IT(&hdma_tim1_ch1, (uint32_t) ouputOffset,
 			(uint32_t) &(GPIOB->ODR), planeSize);
 
 	nextDmaOffset += planeSize;
 
-	if (nextDmaOffset > bufferSize) {
+	if (nextDmaOffset >= bufferSize) {
 		nextDmaOffset = 0;
 	}
 }

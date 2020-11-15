@@ -182,7 +182,7 @@ static void MX_IWDG_Init(void)
 
   /* USER CODE END IWDG_Init 1 */
   hiwdg.Instance = IWDG;
-  hiwdg.Init.Prescaler = IWDG_PRESCALER_4;
+  hiwdg.Init.Prescaler = IWDG_PRESCALER_8;
   hiwdg.Init.Reload = 4095;
   if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
   {
@@ -377,6 +377,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(Matrix_LAT_GPIO_Port, Matrix_LAT_Pin, GPIO_PIN_SET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(DebugPin_GPIO_Port, DebugPin_Pin, GPIO_PIN_RESET);
+
   /*Configure GPIO pins : Matrix_R0_Pin Matrix_G0_Pin Matrix_B0_Pin Matrix_D_Pin
                            Matrix_CLK_Pin Matrix_LAT_Pin Matrix_OE_Pin Matrix_C_Pin
                            Matrix_B_Pin Matrix_A_Pin Matrix_E_Pin Matrix_B1_Pin
@@ -389,6 +392,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : DebugPin_Pin */
+  GPIO_InitStruct.Pin = DebugPin_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(DebugPin_GPIO_Port, &GPIO_InitStruct);
 
 }
 
