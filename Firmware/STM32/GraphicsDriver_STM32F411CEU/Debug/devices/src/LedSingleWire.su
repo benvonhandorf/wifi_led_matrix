@@ -1,0 +1,7 @@
+DisplayDriver.h:11:7:constexpr DisplayDriver::DisplayDriver()	16	static
+LedSingleWire.cpp:21:1:LedSingleWire::LedSingleWire(LedSingleWire::Format, uint8_t, uint16_t)	16	static
+LedSingleWire.cpp:38:6:virtual void LedSingleWire::Open()	48	static
+LedSingleWire.cpp:66:6:virtual void LedSingleWire::Close()	16	static
+LedSingleWire.cpp:70:6:virtual void LedSingleWire::SetPixel(uint16_t, uint16_t, uint8_t, uint8_t, uint8_t, uint8_t)	40	static
+LedSingleWire.cpp:107:6:virtual void LedSingleWire::SwapBuffer()	16	static
+LedSingleWire.cpp:111:6:void LedSingleWire::StartNextDma()	16	static

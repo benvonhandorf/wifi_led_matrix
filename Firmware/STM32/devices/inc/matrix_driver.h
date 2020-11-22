@@ -8,28 +8,28 @@
 #ifndef INC_MATRIX_DRIVER_H_
 #define INC_MATRIX_DRIVER_H_
 
-class MatrixDriver {
+class MatrixDriver : public DisplayDriver {
 public:
 	enum ScanType { SCAN_16 };
 	MatrixDriver(uint8_t width, uint8_t height, ScanType scanType);
 
-	void open();
+	void Open();
 
-	void close();
+	void Close();
 
 	uint8_t PlaneBits(uint8_t value);
 
-	void SetPixel(uint8_t x, uint8_t y, uint8_t r, uint8_t g, uint8_t b);
+	void SetPixel(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t b, uint8_t w);
 
 	void SwapBuffer();
 
 	void Handle();
 
 	void Dump();
-
-	void StartNextDma();
 private:
 	uint16_t BufferOffset(uint8_t x, uint8_t y, uint8_t plane);
+
+	void StartNextDma();
 
 	uint8_t width;
 	uint8_t height;

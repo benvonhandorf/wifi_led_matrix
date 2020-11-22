@@ -1,3 +1,19 @@
-cpp_main.cpp:31:16:int cpp_main()	40	static
-cpp_main.cpp:158:1:void __static_initialization_and_destruction_0(int, int)	16	static
-cpp_main.cpp:158:1:cpp)	8	static
+configuration.h:35:11:uint16_t Configuration::getWidth()	16	static
+configuration.h:44:11:uint16_t Configuration::getHeight()	16	static
+PixelMapping.h:14:3:PixelMapping::Pixel::Pixel(uint16_t, uint16_t)	16	static
+PixelMapping.h:28:8:virtual PixelMapping::Pixel SimplePixelMapping::mapVirtualPixelToPhysicalPixel(PixelMapping::Pixel)	24	static
+PixelMapping.h:11:7:constexpr PixelMapping::PixelMapping()	16	static
+PixelMapping.h:35:2:LeftToRightPixelMapping::LeftToRightPixelMapping(uint8_t, uint16_t, uint16_t)	24	static
+PixelMapping.h:41:8:virtual PixelMapping::Pixel LeftToRightPixelMapping::mapVirtualPixelToPhysicalPixel(PixelMapping::Pixel)	32	static
+PixelMapping.h:68:2:SnakePixelMappingFedBottomRight::SnakePixelMappingFedBottomRight(uint8_t, uint16_t, uint16_t)	24	static
+PixelMapping.h:74:8:virtual PixelMapping::Pixel SnakePixelMappingFedBottomRight::mapVirtualPixelToPhysicalPixel(PixelMapping::Pixel)	32	static
+configuration.h:11:8:Configuration::Configuration()	16	static
+cpp_main.cpp:33:6:void readConfiguration()	4	static
+PixelMapping.h:26:7:constexpr SimplePixelMapping::SimplePixelMapping()	16	static
+cpp_main.cpp:53:6:void configure()	16	static
+cpp_main.cpp:83:6:void open()	8	static
+cpp_main.cpp:91:6:void draw(PixelMapping::Pixel, uint8_t, uint8_t, uint8_t, uint8_t)	48	static
+cpp_main.cpp:100:6:void commit()	8	static
+cpp_main.cpp:112:16:int cpp_main()	48	static
+cpp_main.cpp:244:1:void __static_initialization_and_destruction_0(int, int)	16	static
+cpp_main.cpp:244:1:cpp)	8	static

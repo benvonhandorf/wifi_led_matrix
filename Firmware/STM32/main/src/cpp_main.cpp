@@ -3,11 +3,16 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "DisplayDriver.h"
 #include "matrix_driver.h"
 
-#include "image.h"
+#include "LedSingleWire.h"
 
-extern IWDG_HandleTypeDef hiwdg;
+#include "image.h"
+#include "configuration.h"
+#include "PixelMapping.h"
+
+//extern IWDG_HandleTypeDef hiwdg;
 
 extern SPI_HandleTypeDef hspi1;
 
@@ -16,61 +21,142 @@ extern UART_HandleTypeDef huart1;
 #define PANEL_WIDTH 64
 #define PANEL_HEIGHT 32
 
-MatrixDriver matrix(PANEL_WIDTH, PANEL_HEIGHT, MatrixDriver::ScanType::SCAN_16);
-
 char buffer[1024];
 
 uint32_t lastUpdate = 0;
+
+DisplayDriver *display = NULL;
+
+Configuration configuration;
+PixelMapping *pixelMapping = NULL;
+
+void readConfiguration() {
+	configuration.useMatrix = false;
+	configuration.useStrands = true;
+
+	if (configuration.useMatrix) {
+		configuration.matrixFormat = MatrixDriver::SCAN_16;
+		configuration.elementWidth = PANEL_WIDTH;
+		configuration.elementHeight = PANEL_HEIGHT;
+		configuration.elementCount = 1;
+	} else if (configuration.useStrands) {
+		configuration.strandFormat = LedSingleWire::RGBW;
+		configuration.elementWidth = 300;
+		configuration.elementHeight = 1;
+		configuration.elementCount = 1;
+	}
+
+	configuration.pixelConfiguration =
+			Configuration::PixelConfiguration::Simple;
+}
+
+void configure() {
+	if (configuration.useMatrix) {
+		display = new MatrixDriver(configuration.elementWidth * configuration.elementCount,
+				configuration.elementHeight,
+				(MatrixDriver::ScanType) configuration.matrixFormat);
+	} else if (configuration.useStrands) {
+
+		display = new LedSingleWire((LedSingleWire::Format) configuration.strandFormat,
+				configuration.elementCount,
+				configuration.elementWidth);
+	}
+
+	switch (configuration.pixelConfiguration) {
+	case Configuration::PixelConfiguration::LeftToRight:
+		pixelMapping = new LeftToRightPixelMapping(configuration.elementCount,
+				configuration.elementWidth,
+				configuration.elementHeight);
+		break;
+	case Configuration::PixelConfiguration::SnakeStartBottomRight:
+		pixelMapping = new SnakePixelMappingFedBottomRight(
+				configuration.elementCount,
+				configuration.elementWidth,
+				configuration.elementHeight);
+		break;
+	default:
+		pixelMapping = new SimplePixelMapping();
+		break;
+	}
+}
+
+void open() {
+	if (display != NULL) {
+		display->Open();
+	}
+
+	configuration.status = Configuration::Status::Ready;
+}
+
+void draw(PixelMapping::Pixel pixel, uint8_t r, uint8_t g, uint8_t b,
+		uint8_t w) {
+	if (display != NULL) {
+		PixelMapping::Pixel physicalPixel = pixelMapping->mapVirtualPixelToPhysicalPixel(pixel);
+
+		display->SetPixel(physicalPixel.x, physicalPixel.y, r, g, b, w);
+	}
+}
+
+void commit() {
+	if (display != NULL) {
+		display->SwapBuffer();
+	}
+}
 
 //1 - test pattern
 //2 - advancing pixel
 //3 - image
 //4 - Debugging
-#define DRAW 3
+#define DRAW 1
 
 extern "C" int cpp_main(void) {
 	__HAL_DBGMCU_FREEZE_IWDG();
 
-	uint32_t start = HAL_GetTick();
+	readConfiguration();
+
+	configure();
+
+	open();
 
 	uint16_t color_shift = 1;
+
+	uint32_t start = HAL_GetTick();
 
 	uint16_t pos = 0;
 
 #if DRAW == 3
-	for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
-		HAL_IWDG_Refresh(&hiwdg);
+	for (uint16_t col = 0; col < configuration.getWidth(); col++) {
 
-		for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
+		for (uint16_t row = 0; row < configuration.getHeight(); row++) {
 			uint8_t r = IMAGE_DATA[col % IMAGE_WIDTH][row % IMAGE_HEIGHT][0];
 			uint8_t g = IMAGE_DATA[col % IMAGE_WIDTH][row % IMAGE_HEIGHT][1];
 			uint8_t b = IMAGE_DATA[col % IMAGE_WIDTH][row % IMAGE_HEIGHT][2];
 
-			matrix.SetPixel(col, row, r, g, b);
+			draw(PixelMapping::Pixel(col, row), r, g, b, 0);
 		}
 	}
 
 #elif DRAW == 4
 
-	matrix.SetPixel(0, 0, 255, 0, 0);
-	matrix.SetPixel(PANEL_WIDTH - 1, 0, 255, 0, 0);
-	matrix.SetPixel(0, PANEL_HEIGHT - 1, 255, 0, 0);
-	matrix.SetPixel(PANEL_WIDTH - 1, PANEL_HEIGHT - 1, 255, 0, 0);
+	draw(PixelMapping::Pixel(0, 0), 255, 0, 0, 0);
+	draw(PixelMapping::Pixel(configuration.getWidth() - 1, 0), 255, 0, 0, 0);
+	draw(PixelMapping::Pixel(0, configuration.getHeight() - 1), 255, 0, 0, 0);
+	draw(PixelMapping::Pixel(configuration.getWidth() - 1, configuration.getHeight() - 1), 255, 0, 0, 0);
 
-	matrix.SetPixel(32, 9, 255, 255, 255);
+	draw(32, 9, 255, 255, 255);
 #elif DRAW == 5
 
-	uint8_t colVal = 255 / PANEL_WIDTH;
+	uint8_t colVal = 255 / configuration->getWidth();
 
-	for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
-		HAL_IWDG_Refresh(&hiwdg);
+	for (uint16_t col = 0; col < configuration.getWidth(); col++) {
+//		HAL_IWDG_Refresh(&hiwdg);
 
-		for (uint16_t row = PANEL_HEIGHT - 1; row < PANEL_HEIGHT; row++) {
+		for (uint16_t row = 0; row < configuration.getHeight(); row++) {
 			uint8_t r = colVal * col; //(row % 4) == 0 ? colVal * col : 0;
 			uint8_t g = 0;//((row + 1) % 4) == 0 ? colVal * col : 0;
 			uint8_t b = 0;//((row + 2) % 4) == 0 ? colVal * col : 0;
 
-			matrix.SetPixel(col, row, r, g, b);
+			draw(PixelMapping::Pixel(col, row), r, g, b, 0);
 		}
 	}
 #endif
@@ -79,25 +165,23 @@ extern "C" int cpp_main(void) {
 
 	color_shift++;
 
-//	matrix.Dump();
-
-	matrix.SwapBuffer();
-
 	uint32_t duration = HAL_GetTick() - start;
 
 	sprintf(buffer, "Setup Duration: %lu\n", duration);
 
 	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 500);
 
-	matrix.open();
+	commit();
 
 	while (1) {
+
+//		HAL_IWDG_Refresh(&hiwdg);
 
 //		HAL_Delay(5);
 
 #if DRAW == 1
-		for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
-			for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
+		for (uint16_t col = 0; col < configuration.getWidth(); col++) {
+			for (uint16_t row = 0; row < configuration.getHeight(); row++) {
 
 				uint8_t r, g, b;
 
@@ -105,12 +189,14 @@ extern "C" int cpp_main(void) {
 				g = ((row + col + color_shift) % 4) == 1 ? 255 : 0;
 				b = ((row + col + color_shift) % 4) == 2 ? 255 : 0;
 
-				matrix.SetPixel(col, row, r, g, b);
+				draw(PixelMapping::Pixel(col, row), r, g, b, 0);
 			}
 		}
 		color_shift++;
 
-		matrix.SwapBuffer();
+		commit();
+
+//		HAL_Delay(5);
 
 #elif DRAW == 2
 			//pos 64:
@@ -119,8 +205,8 @@ extern "C" int cpp_main(void) {
 			//Panel 2: Red on row 1, Blue on row 2, looks steady
 //			pos = 65;
 
-			for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
-				for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
+			for (uint16_t col = 0; col < configuration.getWidth(); col++) {
+				for (uint16_t row = 0; row < configuration.getHeight; row++) {
 
 					uint8_t r =
 							row == (pos / 64) && col == (pos % 64) ? 255 : 0;
@@ -131,16 +217,16 @@ extern "C" int cpp_main(void) {
 							row == (pos / 64) + 2 && col == (pos % 64) ?
 									255 : 0;
 
-					matrix.SetPixel(col, row, r, g, b);
+					draw(PixelMapping::Pixel(col, row), r, g, b, 0);
 				}
 			}
 			pos++;
 
-			if (pos > (IMAGE_WIDTH * IMAGE_HEIGHT)) {
+			if (pos > (configuration.getWidth() * configuration.getHeight())) {
 				pos = 0;
 			}
 
-			matrix.SwapBuffer();
+			commit();
 #endif
 
 //			for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {

@@ -6,6 +6,7 @@
  */
 
 #include "main.h"
+#include "DisplayDriver.h"
 #include "matrix_driver.h"
 #include <stdio.h>
 #include <string.h>
@@ -23,8 +24,6 @@
 static MatrixDriver *instance;
 
 extern UART_HandleTypeDef huart1;
-
-extern IWDG_HandleTypeDef hiwdg;
 
 extern TIM_HandleTypeDef htim1;
 extern DMA_HandleTypeDef hdma_tim1_ch1;
@@ -53,8 +52,10 @@ void DMA_Abort(DMA_HandleTypeDef *hdma) {
 }
 
 void DMA_Error(DMA_HandleTypeDef *hdma) {
+#ifdef DEBUG_LOGGING
 	sprintf(buffer, "DE - %d %d\n", hdma_tim1_ch1.State,
 			hdma_tim1_ch1.ErrorCode);
+#endif
 
 	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
 }
@@ -81,6 +82,11 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 	this->bufferSize = planeSize * planes;
 
 	this->sendBufferA = true;
+
+	instance = this;
+}
+
+void MatrixDriver::Open() {
 	this->bufferA = new uint16_t[bufferSize];
 	this->bufferB = new uint16_t[bufferSize];
 
@@ -133,10 +139,6 @@ MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
 		}
 	}
 
-	instance = this;
-}
-
-void MatrixDriver::open() {
 	sprintf(buffer, "CFG: %ux%u Buffers: %u Planes: %u@%u \n", width, height,
 			bufferSize, planes, planeSize);
 
@@ -155,16 +157,17 @@ void MatrixDriver::open() {
 	nextDmaOffset = 0;
 
 	StartNextDma();
-
-	__HAL_IWDG_START(&hiwdg);
 }
 
-void MatrixDriver::close() {
+void MatrixDriver::Close() {
 	HAL_DMA_Abort_IT(&hdma_tim1_ch1);
 
 	HAL_TIM_Base_Stop_IT(&htim1);
 
 	nextDmaOffset = 0;
+
+	delete this->bufferA;
+	delete this->bufferB;
 }
 
 uint8_t gamma8[256] = {
@@ -228,8 +231,6 @@ void MatrixDriver::Dump() {
 	uint16_t *outputBuffer = sendBufferA ? bufferB : bufferA;
 
 	for (uint16_t offset = 14784; offset < bufferSize; offset++) {
-		HAL_IWDG_Refresh(&hiwdg);
-
 		uint16_t val = outputBuffer[offset];
 
 //		if (val & Matrix_LAT_Pin || val & Matrix_OE_Pin) {
@@ -309,8 +310,7 @@ void MatrixDriver::Dump() {
 //	}
 }
 
-void MatrixDriver::SetPixel(uint8_t x, uint8_t y, uint8_t r, uint8_t g,
-		uint8_t b) {
+void MatrixDriver::SetPixel(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t b, uint8_t w) {
 	uint16_t rBit, gBit, bBit;
 
 //Set data into the buffer we aren't sending at the moment
@@ -332,12 +332,14 @@ void MatrixDriver::SetPixel(uint8_t x, uint8_t y, uint8_t r, uint8_t g,
 	uint8_t gPlanes = PlaneBits(g);
 	uint8_t bPlanes = PlaneBits(b);
 
+#ifdef DEBUG_LOGGING
 	sprintf(buffer,
 			"%02u, %02u : %02x %02x %02x %04x\n",
 			x, y, rPlanes, gPlanes, bPlanes, pixelMask);
 
 	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer),
 			10);
+#endif
 
 	for (int plane = 0; plane < planes; plane++) {
 		uint16_t planePixelBits = ((rPlanes & (0x01 << plane)) ? rBit : 0)
@@ -360,8 +362,6 @@ void MatrixDriver::SwapBuffer() {
 }
 
 void MatrixDriver::Handle() {
-	HAL_IWDG_Refresh(&hiwdg);
-
 	bool cloneBuffer = completeSwap;
 
 	if (completeSwap) {
@@ -395,12 +395,14 @@ void MatrixDriver::StartNextDma() {
 	htim1.Instance->ARR = AAR_BY_PLANE[plane];
 	htim1.Instance->EGR = TIM_EGR_UG;
 
+#ifdef DEBUG_LOGGING
 	if (hdma_tim1_ch1.State != HAL_DMA_STATE_READY) {
 		sprintf(buffer, "DS - %d %l\n", hdma_tim1_ch1.State,
 				hdma_tim1_ch1.ErrorCode);
 
 		HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
 	}
+#endif
 
 	HAL_DMA_Start_IT(&hdma_tim1_ch1, (uint32_t) ouputOffset,
 			(uint32_t) &(GPIOB->ODR), planeSize);
