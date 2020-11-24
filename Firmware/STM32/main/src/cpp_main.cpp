@@ -31,14 +31,14 @@ Configuration configuration;
 PixelMapping *pixelMapping = NULL;
 
 void readConfiguration() {
-	configuration.useMatrix = false;
-	configuration.useStrands = true;
+	configuration.useMatrix = true;
+	configuration.useStrands = false;
 
 	if (configuration.useMatrix) {
 		configuration.matrixFormat = MatrixDriver::SCAN_16;
 		configuration.elementWidth = PANEL_WIDTH;
 		configuration.elementHeight = PANEL_HEIGHT;
-		configuration.elementCount = 1;
+		configuration.elementCount = 2;
 	} else if (configuration.useStrands) {
 		configuration.strandFormat = LedSingleWire::RGBW;
 		configuration.elementWidth = 300;
@@ -47,31 +47,30 @@ void readConfiguration() {
 	}
 
 	configuration.pixelConfiguration =
-			Configuration::PixelConfiguration::Simple;
+			Configuration::PixelConfiguration::SnakeStartBottomRight;
 }
 
 void configure() {
 	if (configuration.useMatrix) {
-		display = new MatrixDriver(configuration.elementWidth * configuration.elementCount,
+		display = new MatrixDriver(
+				configuration.elementWidth * configuration.elementCount,
 				configuration.elementHeight,
 				(MatrixDriver::ScanType) configuration.matrixFormat);
 	} else if (configuration.useStrands) {
 
-		display = new LedSingleWire((LedSingleWire::Format) configuration.strandFormat,
-				configuration.elementCount,
-				configuration.elementWidth);
+		display = new LedSingleWire(
+				(LedSingleWire::Format) configuration.strandFormat,
+				configuration.elementCount, configuration.elementWidth);
 	}
 
 	switch (configuration.pixelConfiguration) {
 	case Configuration::PixelConfiguration::LeftToRight:
 		pixelMapping = new LeftToRightPixelMapping(configuration.elementCount,
-				configuration.elementWidth,
-				configuration.elementHeight);
+				configuration.elementWidth, configuration.elementHeight);
 		break;
 	case Configuration::PixelConfiguration::SnakeStartBottomRight:
 		pixelMapping = new SnakePixelMappingFedBottomRight(
-				configuration.elementCount,
-				configuration.elementWidth,
+				configuration.elementCount, configuration.elementWidth,
 				configuration.elementHeight);
 		break;
 	default:
@@ -91,7 +90,8 @@ void open() {
 void draw(PixelMapping::Pixel pixel, uint8_t r, uint8_t g, uint8_t b,
 		uint8_t w) {
 	if (display != NULL) {
-		PixelMapping::Pixel physicalPixel = pixelMapping->mapVirtualPixelToPhysicalPixel(pixel);
+		PixelMapping::Pixel physicalPixel =
+				pixelMapping->mapVirtualPixelToPhysicalPixel(pixel);
 
 		display->SetPixel(physicalPixel.x, physicalPixel.y, r, g, b, w);
 	}
@@ -107,7 +107,7 @@ void commit() {
 //2 - advancing pixel
 //3 - image
 //4 - Debugging
-#define DRAW 1
+#define DRAW 3
 
 extern "C" int cpp_main(void) {
 	__HAL_DBGMCU_FREEZE_IWDG();
@@ -128,9 +128,12 @@ extern "C" int cpp_main(void) {
 	for (uint16_t col = 0; col < configuration.getWidth(); col++) {
 
 		for (uint16_t row = 0; row < configuration.getHeight(); row++) {
-			uint8_t r = IMAGE_DATA[col % IMAGE_WIDTH][row % IMAGE_HEIGHT][0];
-			uint8_t g = IMAGE_DATA[col % IMAGE_WIDTH][row % IMAGE_HEIGHT][1];
-			uint8_t b = IMAGE_DATA[col % IMAGE_WIDTH][row % IMAGE_HEIGHT][2];
+			uint8_t r =
+					IMAGE_DATA[pos][col % IMAGE_WIDTH][row % IMAGE_HEIGHT][0];
+			uint8_t g =
+					IMAGE_DATA[pos][col % IMAGE_WIDTH][row % IMAGE_HEIGHT][1];
+			uint8_t b =
+					IMAGE_DATA[pos][col % IMAGE_WIDTH][row % IMAGE_HEIGHT][2];
 
 			draw(PixelMapping::Pixel(col, row), r, g, b, 0);
 		}
@@ -139,26 +142,28 @@ extern "C" int cpp_main(void) {
 #elif DRAW == 4
 
 	draw(PixelMapping::Pixel(0, 0), 255, 0, 0, 0);
-	draw(PixelMapping::Pixel(configuration.getWidth() - 1, 0), 255, 0, 0, 0);
-	draw(PixelMapping::Pixel(0, configuration.getHeight() - 1), 255, 0, 0, 0);
-	draw(PixelMapping::Pixel(configuration.getWidth() - 1, configuration.getHeight() - 1), 255, 0, 0, 0);
+	draw(PixelMapping::Pixel(configuration.getWidth() - 1, 0), 0, 255, 0, 0);
+	draw(PixelMapping::Pixel(0, configuration.getHeight() - 1), 0, 0, 255, 0);
+	draw(
+			PixelMapping::Pixel(configuration.getWidth() - 1,
+					configuration.getHeight() - 1), 255, 255, 255, 0);
 
-	draw(32, 9, 255, 255, 255);
+	draw(PixelMapping::Pixel(32, 9), 255, 255, 255, 0);
 #elif DRAW == 5
 
-	uint8_t colVal = 255 / configuration->getWidth();
-
-	for (uint16_t col = 0; col < configuration.getWidth(); col++) {
-//		HAL_IWDG_Refresh(&hiwdg);
-
-		for (uint16_t row = 0; row < configuration.getHeight(); row++) {
-			uint8_t r = colVal * col; //(row % 4) == 0 ? colVal * col : 0;
-			uint8_t g = 0;//((row + 1) % 4) == 0 ? colVal * col : 0;
-			uint8_t b = 0;//((row + 2) % 4) == 0 ? colVal * col : 0;
-
-			draw(PixelMapping::Pixel(col, row), r, g, b, 0);
-		}
-	}
+//	uint8_t colVal = 255 / configuration->getWidth();
+//
+//	for (uint16_t col = 0; col < configuration.getWidth(); col++) {
+////		HAL_IWDG_Refresh(&hiwdg);
+//
+//		for (uint16_t row = 0; row < configuration.getHeight(); row++) {
+//			uint8_t r = colVal * col; //(row % 4) == 0 ? colVal * col : 0;
+//			uint8_t g = 0;//((row + 1) % 4) == 0 ? colVal * col : 0;
+//			uint8_t b = 0;//((row + 2) % 4) == 0 ? colVal * col : 0;
+//
+//			draw(PixelMapping::Pixel(col, row), r, g, b, 0);
+//		}
+//	}
 #endif
 
 	lastUpdate = HAL_GetTick();
@@ -180,53 +185,102 @@ extern "C" int cpp_main(void) {
 //		HAL_Delay(5);
 
 #if DRAW == 1
-		for (uint16_t col = 0; col < configuration.getWidth(); col++) {
-			for (uint16_t row = 0; row < configuration.getHeight(); row++) {
+	for (uint16_t col = 0; col < configuration.getWidth(); col++) {
+		for (uint16_t row = 0; row < configuration.getHeight(); row++) {
 
-				uint8_t r, g, b;
+			uint8_t r, g, b;
 
-				r = ((row + col + color_shift) % 4) == 0 ? 255 : 0;
-				g = ((row + col + color_shift) % 4) == 1 ? 255 : 0;
-				b = ((row + col + color_shift) % 4) == 2 ? 255 : 0;
+			r = ((row + col + color_shift) % 4) == 0 ? 255 : 0;
+			g = ((row + col + color_shift) % 4) == 1 ? 255 : 0;
+			b = ((row + col + color_shift) % 4) == 2 ? 255 : 0;
 
-				draw(PixelMapping::Pixel(col, row), r, g, b, 0);
-			}
+			draw(PixelMapping::Pixel(col, row), r, g, b, 0);
 		}
-		color_shift++;
+	}
+	color_shift++;
 
-		commit();
+	commit();
 
 //		HAL_Delay(5);
 
 #elif DRAW == 2
-			//pos 64:
-			//Panel 1: Red on row 1, Green on row 2, faint green on row 13, flickering red on row 15, all in col 0
-			//flickering red about halfway across row 15
-			//Panel 2: Red on row 1, Blue on row 2, looks steady
+	//pos 64:
+	//Panel 1: Red on row 1, Green on row 2, faint green on row 13, flickering red on row 15, all in col 0
+	//flickering red about halfway across row 15
+	//Panel 2: Red on row 1, Blue on row 2, looks steady
 //			pos = 65;
 
-			for (uint16_t col = 0; col < configuration.getWidth(); col++) {
-				for (uint16_t row = 0; row < configuration.getHeight; row++) {
+	for (uint16_t col = 0; col < configuration.getWidth(); col++) {
+		for (uint16_t row = 0; row < configuration.getHeight(); row++) {
 
-					uint8_t r =
-							row == (pos / 64) && col == (pos % 64) ? 255 : 0;
-					uint8_t g =
-							row == (pos / 64) + 1 && col == (pos % 64) ?
-									255 : 0;
-					uint8_t b =
-							row == (pos / 64) + 2 && col == (pos % 64) ?
-									255 : 0;
+			uint8_t r =
+			row == (pos / 64) && col == (pos % 64) ? 255 : 0;
+			uint8_t g =
+			row == (pos / 64) + 1 && col == (pos % 64) ?
+			255 : 0;
+			uint8_t b =
+			row == (pos / 64) + 2 && col == (pos % 64) ?
+			255 : 0;
 
-					draw(PixelMapping::Pixel(col, row), r, g, b, 0);
-				}
+			if(r > 0 || g > 0 || b > 0 ) {
+				display->(PixelMapping::Pixel(col, row), r, g, b, 0);
 			}
-			pos++;
+		}
+	}
+	pos++;
 
-			if (pos > (configuration.getWidth() * configuration.getHeight())) {
-				pos = 0;
+	if (pos > (configuration.getWidth() * configuration.getHeight())) {
+		pos = 0;
+	}
+
+	commit();
+#elif DRAW == 3
+
+		HAL_Delay(10);
+
+		for (uint16_t col = 0; col < configuration.getWidth(); col++) {
+
+			for (uint16_t row = 0; row < configuration.getHeight(); row++) {
+				uint8_t r = IMAGE_DATA[pos][col % IMAGE_WIDTH][row
+						% IMAGE_HEIGHT][0];
+				uint8_t g = IMAGE_DATA[pos][col % IMAGE_WIDTH][row
+						% IMAGE_HEIGHT][1];
+				uint8_t b = IMAGE_DATA[pos][col % IMAGE_WIDTH][row
+						% IMAGE_HEIGHT][2];
+
+				draw(PixelMapping::Pixel(col, row), r, g, b, 0);
 			}
+		}
 
-			commit();
+		commit();
+
+		pos += 1;
+
+		if (pos >= IMAGE_FRAMES) {
+			pos = 0;
+		}
+#elif DRAW == 5
+
+	uint16_t row = 31;
+	uint16_t col = pos % 128;
+
+	uint8_t r = 255; //(row % 4) == 0 ? colVal * col : 0;
+	uint8_t g = 0;//((row + 1) % 4) == 0 ? colVal * col : 0;
+	uint8_t b = 0;//((row + 2) % 4) == 0 ? colVal * col : 0;
+
+	PixelMapping::Pixel physicalPixel = pixelMapping->mapVirtualPixelToPhysicalPixel(PixelMapping::Pixel(col, row));
+
+	display->SetPixel(col, row, r, g, b, 0);
+
+	pos++;
+
+	if (pos > (configuration.getWidth() * configuration.getHeight())) {
+		pos = 0;
+	}
+
+	commit();
+
+	HAL_Delay(10);
 #endif
 
 //			for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {

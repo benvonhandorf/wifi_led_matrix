@@ -76,15 +76,19 @@ public:
 		uint16_t panel = input.y / panelHeight;
 		uint16_t lineOnPanel = input.y % panelHeight;
 
-		if(panel % 2 == 1) {
-			//Odd panels are vertically reversed
-			lineOnPanel = panelHeight - lineOnPanel;
+		uint16_t xOffset = ((panelCount - 1) - panel) * panelWidth;
+		uint16_t x;
+
+		if(((panelCount - 1) - panel) % 2 == 1) {
+			//Even panels (from feedpoint) are vertically reversed
+			lineOnPanel = (panelHeight - 1) - lineOnPanel;
+			x = xOffset + input.x;
+		} else {
+			x= xOffset + ((panelWidth -1) - input.x);
 		}
 
-		uint16_t xOffset = (panelCount - 1) - panel * panelWidth;
-
 		Pixel output {
-			.x= xOffset + input.x,
+			.x= x,
 			.y = lineOnPanel
 		};
 

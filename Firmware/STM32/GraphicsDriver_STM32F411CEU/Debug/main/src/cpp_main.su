@@ -11,9 +11,9 @@ configuration.h:11:8:Configuration::Configuration()	16	static
 cpp_main.cpp:33:6:void readConfiguration()	4	static
 PixelMapping.h:26:7:constexpr SimplePixelMapping::SimplePixelMapping()	16	static
 cpp_main.cpp:53:6:void configure()	16	static
-cpp_main.cpp:83:6:void open()	8	static
-cpp_main.cpp:91:6:void draw(PixelMapping::Pixel, uint8_t, uint8_t, uint8_t, uint8_t)	48	static
+cpp_main.cpp:82:6:void open()	8	static
+cpp_main.cpp:90:6:void draw(PixelMapping::Pixel, uint8_t, uint8_t, uint8_t, uint8_t)	48	static
 cpp_main.cpp:100:6:void commit()	8	static
-cpp_main.cpp:112:16:int cpp_main()	48	static
-cpp_main.cpp:244:1:void __static_initialization_and_destruction_0(int, int)	16	static
-cpp_main.cpp:244:1:cpp)	8	static
+cpp_main.cpp:112:16:int cpp_main()	64	static
+cpp_main.cpp:298:1:void __static_initialization_and_destruction_0(int, int)	16	static
+cpp_main.cpp:298:1:cpp)	8	static

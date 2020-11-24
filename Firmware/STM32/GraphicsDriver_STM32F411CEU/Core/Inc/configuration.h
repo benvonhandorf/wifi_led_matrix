@@ -43,10 +43,11 @@ public:
 
 	uint16_t getHeight() {
 		switch (pixelConfiguration) {
-		LeftToRight:
+		case LeftToRight:
+		case SnakeStartBottomRight:
 			return elementHeight * elementCount;
 		default:
-			return elementWidth;
+			return elementHeight;
 		}
 	}
 };

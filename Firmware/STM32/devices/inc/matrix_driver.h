@@ -11,7 +11,7 @@
 class MatrixDriver : public DisplayDriver {
 public:
 	enum ScanType { SCAN_16 };
-	MatrixDriver(uint8_t width, uint8_t height, ScanType scanType);
+	MatrixDriver(uint16_t width, uint16_t height, ScanType scanType);
 
 	void Open();
 
@@ -27,12 +27,12 @@ public:
 
 	void Dump();
 private:
-	uint16_t BufferOffset(uint8_t x, uint8_t y, uint8_t plane);
+	uint16_t BufferOffset(uint16_t x, uint16_t y, uint8_t plane);
 
 	void StartNextDma();
 
-	uint8_t width;
-	uint8_t height;
+	uint16_t width;
+	uint16_t height;
 	uint8_t planes;
 	ScanType scanType;
 

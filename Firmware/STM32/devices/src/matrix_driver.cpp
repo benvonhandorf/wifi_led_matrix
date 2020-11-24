@@ -60,18 +60,26 @@ void DMA_Error(DMA_HandleTypeDef *hdma) {
 	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
 }
 
-uint16_t MatrixDriver::BufferOffset(uint8_t x, uint8_t y, uint8_t plane) {
+
+//Memory Layout:
+// Plane - plane * planeSize
+// -- Row - y % (height / 2) - Top and bottom half of the panel are in the same output cycle
+// ---- Pixel - 0 and 1 data lines, select lines for previously sent row (to keep it displaying while new data is clocked in to the shift registers)
+// ------ Offset - Set data
+// ------ Offset + 1 - Clock data
+// ---- OE & Latch
+uint16_t MatrixDriver::BufferOffset(uint16_t x, uint16_t y, uint8_t plane) {
 	uint16_t rowEntry = y % (height / 2);
 	uint16_t rowOffset = rowEntry
 			* ((width * CYCLES_PER_PIXEL) + ROW_END_CYCLES);
-	uint16_t offsetInRow = x * CYCLES_PER_PIXEL;
+	uint16_t offsetInRow = ((width - 1) - x) * CYCLES_PER_PIXEL;
 
 	return (plane * planeSize) + rowOffset + offsetInRow;
 }
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 
-MatrixDriver::MatrixDriver(uint8_t width, uint8_t height, ScanType scanType) {
+MatrixDriver::MatrixDriver(uint16_t width, uint16_t height, ScanType scanType) {
 	this->width = width;
 	this->height = height;
 	this->scanType = scanType;
@@ -114,7 +122,7 @@ void MatrixDriver::Open() {
 
 			//Setup the final bytes for the row, staring with the output after the last pixel on the current row & plane
 			//Disable outputs
-			uint16_t offset = BufferOffset(width - 1, y,
+			uint16_t offset = BufferOffset(0, y,
 					plane) + CYCLES_PER_PIXEL;
 
 			bufferA[offset] = bufferB[offset] = Matrix_OE_Pin | rowSelects;
