@@ -12130,14 +12130,14 @@ extern "C" int cpp_main(void) {
 
 	commit();
  8004a86:	f7ff ff37 	bl	80048f8 <_Z6commitv>
-	}
-
 	commit();
 #elif DRAW == 3
 
-		HAL_Delay(10);
- 8004a8a:	200a      	movs	r0, #10
- 8004a8c:	f7fc f9e0 	bl	8000e50 <HAL_Delay>
+//		HAL_Delay(5);
+
+		start = HAL_GetTick();
+ 8004a8a:	f7fc f9d5 	bl	8000e38 <HAL_GetTick>
+ 8004a8e:	61b8      	str	r0, [r7, #24]
 
 		for (uint16_t col = 0; col < configuration.getWidth(); col++) {
  8004a90:	2300      	movs	r3, #0
@@ -12283,6 +12283,10 @@ extern "C" int cpp_main(void) {
 
 		commit();
  8004b90:	f7ff feb2 	bl	80048f8 <_Z6commitv>
+//
+//		sprintf(buffer, "Setup Duration: %lu\n", duration);
+//
+//		HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 500);
 
 		pos += 1;
  8004b94:	8cfb      	ldrh	r3, [r7, #38]	; 0x26

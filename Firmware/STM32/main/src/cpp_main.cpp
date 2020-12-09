@@ -236,7 +236,9 @@ extern "C" int cpp_main(void) {
 	commit();
 #elif DRAW == 3
 
-		HAL_Delay(10);
+//		HAL_Delay(5);
+
+		start = HAL_GetTick();
 
 		for (uint16_t col = 0; col < configuration.getWidth(); col++) {
 
@@ -253,6 +255,12 @@ extern "C" int cpp_main(void) {
 		}
 
 		commit();
+
+//		uint32_t duration = HAL_GetTick() - start;
+//
+//		sprintf(buffer, "Setup Duration: %lu\n", duration);
+//
+//		HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 500);
 
 		pos += 1;
 

@@ -27,6 +27,7 @@ devices/src/matrix_driver.o: \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h \
+ /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver/../devices/inc/DisplayDriver.h \
  /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver/../devices/inc/matrix_driver.h
 
 ../Core/Inc/main.h:
@@ -84,5 +85,7 @@ devices/src/matrix_driver.o: \
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h:
 
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h:
+
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver/../devices/inc/DisplayDriver.h:
 
 /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver/../devices/inc/matrix_driver.h:
