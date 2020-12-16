@@ -45,6 +45,11 @@ endif
 
 -include ../makefile.defs
 
+BUILD_ARTIFACT_NAME := GraphicsDriver_STM32F411CEU
+BUILD_ARTIFACT_EXTENSION := elf
+BUILD_ARTIFACT_PREFIX := 
+BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME).$(BUILD_ARTIFACT_EXTENSION)
+
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
 GraphicsDriver_STM32F411CEU.elf \
@@ -60,11 +65,18 @@ GraphicsDriver_STM32F411CEU.bin \
 
 
 # All Target
-all: GraphicsDriver_STM32F411CEU.elf secondary-outputs
+all: main-build
+
+# Main-build Target
+main-build: GraphicsDriver_STM32F411CEU.elf secondary-outputs
+
+dependents:
+	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Debug && $(MAKE) clean all
+	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/Debug && $(MAKE) clean all
 
 # Tool invocations
-GraphicsDriver_STM32F411CEU.elf: $(OBJS) $(USER_OBJS) /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/STM32F411CEUX_FLASH.ld
-	arm-none-eabi-g++ -o "GraphicsDriver_STM32F411CEU.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/STM32F411CEUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="GraphicsDriver_STM32F411CEU.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
+GraphicsDriver_STM32F411CEU.elf: $(OBJS) $(USER_OBJS) /home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Debug/libCommon.a /home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/Debug/libDisplayDriverCommon.a /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/STM32F411CEUX_FLASH.ld
+	arm-none-eabi-g++ -o "GraphicsDriver_STM32F411CEU.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/STM32F411CEUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="GraphicsDriver_STM32F411CEU.map" -Wl,--gc-sections -static -L"/home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/Debug" -L"/home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Debug" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -90,7 +102,16 @@ clean:
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_BIN)
 
-.PHONY: all clean dependents
+fail-specified-linker-script-missing:
+	@echo 'Error: Cannot find the specified linker script. Check the linker settings in the build configuration.'
+	@exit 2
+
+warn-no-linker-script-specified:
+	@echo 'Warning: No linker script specified. Check the linker settings in the build configuration.'
+
+.PHONY: all clean dependents fail-specified-linker-script-missing warn-no-linker-script-specified
 .SECONDARY:
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Debug/libCommon.a:
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/Debug/libDisplayDriverCommon.a:
 
 -include ../makefile.targets

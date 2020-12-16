@@ -8,6 +8,8 @@
 #ifndef INC_MATRIX_DRIVER_H_
 #define INC_MATRIX_DRIVER_H_
 
+#include <stdint.h>
+
 class MatrixDriver : public DisplayDriver {
 public:
 	enum ScanType { SCAN_16 };

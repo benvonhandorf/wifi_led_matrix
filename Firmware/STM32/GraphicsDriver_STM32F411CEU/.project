@@ -3,6 +3,8 @@
 	<name>GraphicsDriver_STM32F411CEU</name>
 	<comment></comment>
 	<projects>
+		<project>Common</project>
+		<project>DisplayDriverCommon</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

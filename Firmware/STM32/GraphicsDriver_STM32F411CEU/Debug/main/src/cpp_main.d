@@ -30,8 +30,8 @@ main/src/cpp_main.o: \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
  /home/benvh/projects/wifi_led_matrix/Firmware/STM32/main/src/../inc/cpp_main.h \
- /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/../devices/inc/DisplayDriver.h \
- /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/../devices/inc/matrix_driver.h \
+ /home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/DisplayDriver.h \
+ /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/../devices/inc/MatrixDriver.h \
  /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/../devices/inc/LedSingleWire.h \
  /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/../data/inc/image.h \
  ../Core/Inc/configuration.h ../Core/Inc/PixelMapping.h
@@ -98,9 +98,9 @@ main/src/cpp_main.o: \
 
 /home/benvh/projects/wifi_led_matrix/Firmware/STM32/main/src/../inc/cpp_main.h:
 
-/home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/../devices/inc/DisplayDriver.h:
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/DisplayDriver.h:
 
-/home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/../devices/inc/matrix_driver.h:
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/../devices/inc/MatrixDriver.h:
 
 /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/../devices/inc/LedSingleWire.h:
 

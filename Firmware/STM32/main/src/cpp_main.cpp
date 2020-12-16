@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include "DisplayDriver.h"
-#include "matrix_driver.h"
+#include "MatrixDriver.h"
 
 #include "LedSingleWire.h"
 

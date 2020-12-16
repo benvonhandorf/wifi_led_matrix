@@ -23,5 +23,5 @@
 "Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.o"
 "Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.o"
 "devices/src/LedSingleWire.o"
-"devices/src/matrix_driver.o"
+"devices/src/MatrixDriver.o"
 "main/src/cpp_main.o"

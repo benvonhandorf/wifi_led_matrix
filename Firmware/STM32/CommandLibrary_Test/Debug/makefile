@@ -41,12 +41,15 @@ all: CommandLibrary_Test
 
 dependents:
 	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/CommandLibrary/Debug && $(MAKE) clean all
+	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Debug && $(MAKE) clean all
+	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/Debug && $(MAKE) clean all
+	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/NetworkLibrary/Debug && $(MAKE) clean all
 
 # Tool invocations
-CommandLibrary_Test: $(OBJS) $(USER_OBJS) /home/benvh/projects/wifi_led_matrix/Firmware/STM32/CommandLibrary/Debug/libCommandLibrary.a
+CommandLibrary_Test: $(OBJS) $(USER_OBJS) /home/benvh/projects/wifi_led_matrix/Firmware/STM32/CommandLibrary/Debug/libCommandLibrary.a /home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Debug/libCommon.a /home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/Debug/libDisplayDriverCommon.a /home/benvh/projects/wifi_led_matrix/Firmware/STM32/NetworkLibrary/Debug/libNetworkLibrary.a
 	@echo 'Building target: $@'
 	@echo 'Invoking: Cross G++ Linker'
-	g++ -L"/home/benvh/projects/wifi_led_matrix/Firmware/STM32/CommandLibrary/Debug" -o "CommandLibrary_Test" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L"/home/benvh/projects/wifi_led_matrix/Firmware/STM32/NetworkLibrary/Debug" -L"/home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/Debug" -L"/home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Debug" -L"/home/benvh/projects/wifi_led_matrix/Firmware/STM32/CommandLibrary/Debug" -o "CommandLibrary_Test" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -57,5 +60,8 @@ clean:
 
 .PHONY: all clean dependents
 /home/benvh/projects/wifi_led_matrix/Firmware/STM32/CommandLibrary/Debug/libCommandLibrary.a:
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Debug/libCommon.a:
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/Debug/libDisplayDriverCommon.a:
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/NetworkLibrary/Debug/libNetworkLibrary.a:
 
 -include ../makefile.targets

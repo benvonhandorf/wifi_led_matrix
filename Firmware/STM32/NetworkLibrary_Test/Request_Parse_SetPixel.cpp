@@ -40,12 +40,12 @@ TEST_CASE("Request Parsing - SetPixelData") {
 
 		REQUIRE(underTest.Parse(data, length));
 		REQUIRE(underTest.type == RequestType::SetPixelData);
-		REQUIRE(underTest.length == 8);
-		uint16_t x = underTest.data[0] << 8 | underTest.data[1];
-		uint16_t y = underTest.data[2] << 8 | underTest.data[3];
+		REQUIRE(underTest.bodyLength == 8);
+		uint16_t x = underTest.body[0] << 8 | underTest.body[1];
+		uint16_t y = underTest.body[2] << 8 | underTest.body[3];
 		REQUIRE(x == 0);
 		REQUIRE(y == 0);
-		REQUIRE(underTest.data[4] == 0x7F);
+		REQUIRE(underTest.body[4] == 0x7F);
 	}
 
 	SECTION("Two pixel of data - parses successfully") {
@@ -67,13 +67,13 @@ TEST_CASE("Request Parsing - SetPixelData") {
 
 		REQUIRE(underTest.Parse(data, length));
 		REQUIRE(underTest.type == RequestType::SetPixelData);
-		REQUIRE(underTest.length == 12);
-		uint16_t x = underTest.data[0] << 8 | underTest.data[1];
-		uint16_t y = underTest.data[2] << 8 | underTest.data[3];
+		REQUIRE(underTest.bodyLength == 12);
+		uint16_t x = underTest.body[0] << 8 | underTest.body[1];
+		uint16_t y = underTest.body[2] << 8 | underTest.body[3];
 		REQUIRE(x == 0);
 		REQUIRE(y == 0);
-		REQUIRE(underTest.data[8] == 0x7F);
-		REQUIRE(underTest.data[8] == 0x7F);
+		REQUIRE(underTest.body[8] == 0x7F);
+		REQUIRE(underTest.body[8] == 0x7F);
 	}
 }
 

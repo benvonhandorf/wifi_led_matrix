@@ -1,4 +1,4 @@
-DisplayDriver.h:11:7:constexpr DisplayDriver::DisplayDriver()	16	static
+DisplayDriver.h:13:7:constexpr DisplayDriver::DisplayDriver()	16	static
 LedSingleWire.cpp:21:1:LedSingleWire::LedSingleWire(LedSingleWire::Format, uint8_t, uint16_t)	16	static
 LedSingleWire.cpp:38:6:virtual void LedSingleWire::Open()	48	static
 LedSingleWire.cpp:66:6:virtual void LedSingleWire::Close()	16	static

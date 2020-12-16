@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lCommandLibrary
+LIBS := -lNetworkLibrary -lDisplayDriverCommon -lCommon -lCommandLibrary
 

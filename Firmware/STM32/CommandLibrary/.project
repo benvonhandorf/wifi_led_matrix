@@ -3,6 +3,9 @@
 	<name>CommandLibrary</name>
 	<comment></comment>
 	<projects>
+		<project>Common</project>
+		<project>DisplayDriverCommon</project>
+		<project>NetworkLibrary</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

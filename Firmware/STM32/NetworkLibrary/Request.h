@@ -19,11 +19,11 @@ public:
 	bool Parse(uint8_t *data, uint16_t length);
 
 	uint8_t type;
-	uint16_t length;
-	uint8_t data[NETWORK_PACKET_MAXIMUM_SIZE];
+	uint16_t bodyLength;
+	uint8_t body[NETWORK_PACKET_MAXIMUM_SIZE];
 
 private:
-	bool ParseSetPixelData();
+	bool ParseSetPixelDataRequest();
 };
 
 #endif /* REQUEST_H_ */

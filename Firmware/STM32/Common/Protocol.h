@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 
-#define NETWORK_PACKET_MAXIMUM_SIZE	3072
+#define NETWORK_PACKET_MAXIMUM_SIZE	1024
 
 //Multi-byte entities are sent in network byte order
 
@@ -39,8 +39,13 @@ enum RequestType : uint8_t {
 	 */
 	SetPixelData = 0x01,
 
+			/**
+			 * Commit assigned pixel data to the display.
+			 */
+			Commit = 0x02,
+
 			/***
-			 *
+			 * Reconfigure the output device with the supplied data.
 			 */
 			Configure = 0x80
 };

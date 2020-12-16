@@ -29,7 +29,7 @@ devices/src/LedSingleWire.o: \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
- /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/../devices/inc/DisplayDriver.h \
+ /home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/DisplayDriver.h \
  /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/../devices/inc/LedSingleWire.h
 
 ../Core/Inc/main.h:
@@ -92,6 +92,6 @@ devices/src/LedSingleWire.o: \
 
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
 
-/home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/../devices/inc/DisplayDriver.h:
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/DisplayDriver.h:
 
 /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/../devices/inc/LedSingleWire.h:

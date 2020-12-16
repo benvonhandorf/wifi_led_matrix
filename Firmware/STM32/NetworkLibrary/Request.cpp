@@ -23,24 +23,24 @@ bool Request::Parse(uint8_t *data, uint16_t dataLength) {
 	}
 
 	type = data[0];
-	length = (data[1] << 8) | data[2];
+	bodyLength = (data[1] << 8) | data[2];
 
-	if (length != dataLength - 3) {
+	if (bodyLength != dataLength - 3) {
 		return false;
 	}
 
-	memcpy(this->data, data + 3, length);
+	memcpy(this->body, data + 3, bodyLength);
 
 	switch (type) {
 	case RequestType::SetPixelData:
-		return ParseSetPixelData();
+		return ParseSetPixelDataRequest();
 	}
 
 	return true;
 }
 
-bool Request::ParseSetPixelData() {
-	if (length % 4 != 0 || length == 4) {
+bool Request::ParseSetPixelDataRequest() {
+	if (bodyLength % 4 != 0 || bodyLength == 4) {
 		return false;
 	}
 

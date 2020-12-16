@@ -8,6 +8,8 @@
 #ifndef INC_DISPLAYDRIVER_H_
 #define INC_DISPLAYDRIVER_H_
 
+#include <stdint.h>
+
 class DisplayDriver {
 public:
 	virtual void Open() = 0;

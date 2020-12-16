@@ -7,9 +7,9 @@
 
 #include "main.h"
 #include "DisplayDriver.h"
-#include "matrix_driver.h"
 #include <stdio.h>
 #include <string.h>
+#include "MatrixDriver.h"
 
 #define SET_IF(cond, x) (cond ? x : 0)
 #define RESET_SHIFT(x) (x << 16)
@@ -370,8 +370,6 @@ void MatrixDriver::SwapBuffer() {
 }
 
 void MatrixDriver::Handle() {
-	bool cloneBuffer = completeSwap;
-
 	if (completeSwap) {
 		completeSwap = false;
 		sendBufferA = !sendBufferA;
@@ -379,14 +377,6 @@ void MatrixDriver::Handle() {
 	}
 
 	StartNextDma();
-
-//	if (cloneBuffer) {
-//		uint16_t *outputBuffer = (sendBufferA ? bufferA : bufferB);
-//		uint16_t *targetBuffer = (!sendBufferA ? bufferA : bufferB);
-//
-//		memcpy(targetBuffer, outputBuffer, bufferSize * 2);
-//	}
-
 }
 
 #if PLANES == 8
