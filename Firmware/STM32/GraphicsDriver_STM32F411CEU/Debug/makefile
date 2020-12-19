@@ -71,12 +71,14 @@ all: main-build
 main-build: GraphicsDriver_STM32F411CEU.elf secondary-outputs
 
 dependents:
-	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Debug && $(MAKE) clean all
-	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/Debug && $(MAKE) clean all
+	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Debug_ARM && $(MAKE) all
+	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/Debug_ARM && $(MAKE) all
+	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/CommandLibrary/Debug_ARM && $(MAKE) all
+	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/NetworkLibrary/Debug_ARM && $(MAKE) all
 
 # Tool invocations
-GraphicsDriver_STM32F411CEU.elf: $(OBJS) $(USER_OBJS) /home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Debug/libCommon.a /home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/Debug/libDisplayDriverCommon.a /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/STM32F411CEUX_FLASH.ld
-	arm-none-eabi-g++ -o "GraphicsDriver_STM32F411CEU.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/STM32F411CEUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="GraphicsDriver_STM32F411CEU.map" -Wl,--gc-sections -static -L"/home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/Debug" -L"/home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Debug" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
+GraphicsDriver_STM32F411CEU.elf: $(OBJS) $(USER_OBJS) /home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Debug_ARM/libCommon.a /home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/Debug_ARM/libDisplayDriverCommon.a /home/benvh/projects/wifi_led_matrix/Firmware/STM32/CommandLibrary/Debug_ARM/libCommandLibrary.a /home/benvh/projects/wifi_led_matrix/Firmware/STM32/NetworkLibrary/Debug_ARM/libNetworkLibrary.a /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/STM32F411CEUX_FLASH.ld
+	arm-none-eabi-g++ -o "GraphicsDriver_STM32F411CEU.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/STM32F411CEUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="GraphicsDriver_STM32F411CEU.map" -Wl,--gc-sections -static -L"/home/benvh/projects/wifi_led_matrix/Firmware/STM32/NetworkLibrary/Debug_ARM" -L"/home/benvh/projects/wifi_led_matrix/Firmware/STM32/CommandLibrary/Debug_ARM" -L"/home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/Debug_ARM" -L"/home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Debug_ARM" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -111,7 +113,9 @@ warn-no-linker-script-specified:
 
 .PHONY: all clean dependents fail-specified-linker-script-missing warn-no-linker-script-specified
 .SECONDARY:
-/home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Debug/libCommon.a:
-/home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/Debug/libDisplayDriverCommon.a:
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Debug_ARM/libCommon.a:
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/Debug_ARM/libDisplayDriverCommon.a:
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/CommandLibrary/Debug_ARM/libCommandLibrary.a:
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/NetworkLibrary/Debug_ARM/libNetworkLibrary.a:
 
 -include ../makefile.targets

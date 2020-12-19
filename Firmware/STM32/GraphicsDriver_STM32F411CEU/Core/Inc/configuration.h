@@ -34,7 +34,7 @@ public:
 
 	uint16_t getWidth() {
 		switch (pixelConfiguration) {
-		Simple:
+		case Simple:
 			return elementWidth * elementCount;
 		default:
 			return elementWidth;

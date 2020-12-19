@@ -69,21 +69,21 @@
 				<externalSettings containerId="DisplayDriverCommon;" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
 					<externalSetting>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/DisplayDriverCommon"/>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/DisplayDriverCommon/Debug"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/DisplayDriverCommon/Debug_ARM"/>
 						<entry flags="RESOLVED" kind="libraryFile" name="DisplayDriverCommon" srcPrefixMapping="" srcRootPath=""/>
 					</externalSetting>
 				</externalSettings>
 				<externalSettings containerId="NetworkLibrary;" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
 					<externalSetting>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/NetworkLibrary"/>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/NetworkLibrary/Debug"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/NetworkLibrary/Debug_ARM"/>
 						<entry flags="RESOLVED" kind="libraryFile" name="NetworkLibrary" srcPrefixMapping="" srcRootPath=""/>
 					</externalSetting>
 				</externalSettings>
 				<externalSettings containerId="Common;" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
 					<externalSetting>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/Common"/>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/Common/Debug"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/Common/Debug_ARM"/>
 						<entry flags="RESOLVED" kind="libraryFile" name="Common" srcPrefixMapping="" srcRootPath=""/>
 					</externalSetting>
 				</externalSettings>
@@ -134,13 +134,122 @@
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 		</cconfiguration>
+		<cconfiguration id="cdt.managedbuild.config.gnu.cross.exe.debug.164936113.1111579429">
+			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.config.gnu.cross.exe.debug.164936113.1111579429" moduleId="org.eclipse.cdt.core.settings" name="Debug_ARM">
+				<externalSettings>
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/CommandLibrary"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/CommandLibrary/Debug_ARM"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="CommandLibrary" srcPrefixMapping="" srcRootPath=""/>
+					</externalSetting>
+				</externalSettings>
+				<extensions>
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+				</extensions>
+			</storageModule>
+			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+				<configuration artifactExtension="a" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.staticLib" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.staticLib,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.debug.164936113.1111579429" name="Debug_ARM" optionalBuildProperties="org.eclipse.cdt.docker.launcher.containerbuild.property.selectedvolumes=,org.eclipse.cdt.docker.launcher.containerbuild.property.volumes=" parent="cdt.managedbuild.config.gnu.cross.exe.debug">
+					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.debug.164936113.1111579429." name="/" resourcePath="">
+						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.debug.86116876" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.exe.debug">
+							<option id="cdt.managedbuild.option.gnu.cross.prefix.500582130" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" useByScannerDiscovery="false" value="arm-none-eabi-" valueType="string"/>
+							<option id="cdt.managedbuild.option.gnu.cross.path.1870516009" name="Path" superClass="cdt.managedbuild.option.gnu.cross.path" useByScannerDiscovery="false" value="/home/benvh/tools/gcc-arm-none-eabi/bin" valueType="string"/>
+							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="cdt.managedbuild.targetPlatform.gnu.cross.2129042796" isAbstract="false" osList="all" superClass="cdt.managedbuild.targetPlatform.gnu.cross"/>
+							<builder buildPath="${workspace_loc:/CommandLibrary}/Debug" id="cdt.managedbuild.builder.gnu.cross.879295600" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="cdt.managedbuild.builder.gnu.cross"/>
+							<tool id="cdt.managedbuild.tool.gnu.cross.c.compiler.1443559008" name="Cross GCC Compiler" superClass="cdt.managedbuild.tool.gnu.cross.c.compiler">
+								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.option.optimization.level.1866846621" name="Optimization Level" superClass="gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" valueType="enumerated"/>
+								<option defaultValue="gnu.c.debugging.level.max" id="gnu.c.compiler.option.debugging.level.1338168947" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" useByScannerDiscovery="false" valueType="enumerated"/>
+								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.compiler.option.include.paths.2081222048" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/NetworkLibrary}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/DisplayDriverCommon}&quot;"/>
+								</option>
+								<option id="gnu.c.compiler.option.dialect.std.1506474618" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.c.compiler.dialect.default" valueType="enumerated"/>
+								<option id="gnu.c.compiler.option.misc.other.1271298763" name="Other flags" superClass="gnu.c.compiler.option.misc.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -mcpu=cortex-m4 -specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb" valueType="string"/>
+								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.363184055" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.1953050122" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler">
+								<option id="gnu.cpp.compiler.option.optimization.level.1033849031" name="Optimization Level" superClass="gnu.cpp.compiler.option.optimization.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
+								<option defaultValue="gnu.cpp.compiler.debugging.level.max" id="gnu.cpp.compiler.option.debugging.level.909086730" name="Debug Level" superClass="gnu.cpp.compiler.option.debugging.level" useByScannerDiscovery="false" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.option.dialect.std.94444063" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
+								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.compiler.option.include.paths.1427891758" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/NetworkLibrary}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/DisplayDriverCommon}&quot;"/>
+								</option>
+								<option id="gnu.cpp.compiler.option.other.other.1206622092" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -mcpu=cortex-m4 -specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb" valueType="string"/>
+								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1800796603" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.245012338" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
+							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.506163812" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
+								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.579810716" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
+									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
+									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
+								</inputType>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.cross.archiver.1085918608" name="Cross GCC Archiver" superClass="cdt.managedbuild.tool.gnu.cross.archiver"/>
+							<tool id="cdt.managedbuild.tool.gnu.cross.assembler.1082130269" name="Cross GCC Assembler" superClass="cdt.managedbuild.tool.gnu.cross.assembler">
+								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.both.asm.option.include.paths.1904451694" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/NetworkLibrary}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/DisplayDriverCommon}&quot;"/>
+								</option>
+								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.12062912" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
+							</tool>
+						</toolChain>
+					</folderInfo>
+				</configuration>
+			</storageModule>
+			<storageModule moduleId="org.eclipse.cdt.core.externalSettings">
+				<externalSettings containerId="DisplayDriverCommon;cdt.managedbuild.config.gnu.cross.lib.debug.221157439.857273841" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/DisplayDriverCommon"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/DisplayDriverCommon/Debug_ARM"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="DisplayDriverCommon" srcPrefixMapping="" srcRootPath=""/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="NetworkLibrary;cdt.managedbuild.config.gnu.cross.lib.debug.917613375.1996379177" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/NetworkLibrary"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/NetworkLibrary/Debug_ARM"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="NetworkLibrary" srcPrefixMapping="" srcRootPath=""/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="Common;cdt.managedbuild.config.gnu.cross.lib.debug.886244484.1144452660" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/Common"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/Common/Debug_ARM"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="Common" srcPrefixMapping="" srcRootPath=""/>
+					</externalSetting>
+				</externalSettings>
+			</storageModule>
+		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="CommandLibrary.cdt.managedbuild.target.gnu.cross.exe.1290991090" name="Executable" projectType="cdt.managedbuild.target.gnu.cross.exe"/>
 	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Debug_ARM">
+			<resource resourceType="PROJECT" workspacePath="/CommandLibrary"/>
+		</configuration>
+		<configuration configurationName="Debug">
+			<resource resourceType="PROJECT" workspacePath="/CommandLibrary"/>
+		</configuration>
+		<configuration configurationName="Release">
+			<resource resourceType="PROJECT" workspacePath="/CommandLibrary"/>
+		</configuration>
+	</storageModule>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.cross.exe.release.881025814;cdt.managedbuild.config.gnu.cross.exe.release.881025814.;cdt.managedbuild.tool.gnu.cross.c.compiler.539019105;cdt.managedbuild.tool.gnu.c.compiler.input.1506244371">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.cross.exe.debug.164936113.1111579429;cdt.managedbuild.config.gnu.cross.exe.debug.164936113.1111579429.;cdt.managedbuild.tool.gnu.cross.cpp.compiler.1953050122;cdt.managedbuild.tool.gnu.cpp.compiler.input.1800796603">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.cross.exe.debug.164936113;cdt.managedbuild.config.gnu.cross.exe.debug.164936113.;cdt.managedbuild.tool.gnu.cross.c.compiler.1152547754;cdt.managedbuild.tool.gnu.c.compiler.input.763214118">
@@ -149,18 +258,11 @@
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.cross.exe.debug.164936113;cdt.managedbuild.config.gnu.cross.exe.debug.164936113.;cdt.managedbuild.tool.gnu.cross.cpp.compiler.1084566925;cdt.managedbuild.tool.gnu.cpp.compiler.input.471660222">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.cross.exe.debug.164936113.1111579429;cdt.managedbuild.config.gnu.cross.exe.debug.164936113.1111579429.;cdt.managedbuild.tool.gnu.cross.c.compiler.1443559008;cdt.managedbuild.tool.gnu.c.compiler.input.363184055">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.cross.exe.release.881025814;cdt.managedbuild.config.gnu.cross.exe.release.881025814.;cdt.managedbuild.tool.gnu.cross.cpp.compiler.1184787297;cdt.managedbuild.tool.gnu.cpp.compiler.input.1672139602">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
-	</storageModule>
-	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
-	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
-	<storageModule moduleId="refreshScope" versionNumber="2">
-		<configuration configurationName="Debug">
-			<resource resourceType="PROJECT" workspacePath="/CommandLibrary"/>
-		</configuration>
-		<configuration configurationName="Release">
-			<resource resourceType="PROJECT" workspacePath="/CommandLibrary"/>
-		</configuration>
 	</storageModule>
 </cproject>

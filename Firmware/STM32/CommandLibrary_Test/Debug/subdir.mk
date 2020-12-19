@@ -4,18 +4,21 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../CommandProcessor_SetPixel_MultiplePixel_Test.cpp \
 ../CommandProcessor_SetPixel_SinglePixel_Test.cpp \
 ../DummyDisplayDriver.cpp \
 ../TestDisplay.cpp \
 ../main.cpp 
 
 OBJS += \
+./CommandProcessor_SetPixel_MultiplePixel_Test.o \
 ./CommandProcessor_SetPixel_SinglePixel_Test.o \
 ./DummyDisplayDriver.o \
 ./TestDisplay.o \
 ./main.o 
 
 CPP_DEPS += \
+./CommandProcessor_SetPixel_MultiplePixel_Test.d \
 ./CommandProcessor_SetPixel_SinglePixel_Test.d \
 ./DummyDisplayDriver.d \
 ./TestDisplay.d \

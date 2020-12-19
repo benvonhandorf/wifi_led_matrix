@@ -5,6 +5,8 @@
 	<projects>
 		<project>Common</project>
 		<project>DisplayDriverCommon</project>
+		<project>CommandLibrary</project>
+		<project>NetworkLibrary</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

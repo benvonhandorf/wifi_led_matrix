@@ -25,7 +25,7 @@ void CommandProcessor::ProcessRequest(Request *request,
 
 		uint16_t pixelStart = 4;
 
-		while(pixelStart < request->bodyLength) {
+		while (pixelStart < request->bodyLength) {
 			uint8_t r = request->body[pixelStart + 0];
 			uint8_t g = request->body[pixelStart + 1];
 			uint8_t b = request->body[pixelStart + 2];

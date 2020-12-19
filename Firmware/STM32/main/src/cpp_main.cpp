@@ -12,6 +12,9 @@
 #include "configuration.h"
 #include "PixelMapping.h"
 
+#include "Protocol.h"
+#include "CommandProcessor.h"
+
 //extern IWDG_HandleTypeDef hiwdg;
 
 extern SPI_HandleTypeDef hspi1;
@@ -31,8 +34,8 @@ Configuration configuration;
 PixelMapping *pixelMapping = NULL;
 
 void readConfiguration() {
-	configuration.useMatrix = true;
-	configuration.useStrands = false;
+	configuration.useMatrix = false;
+	configuration.useStrands = true;
 
 	if (configuration.useMatrix) {
 		configuration.matrixFormat = MatrixDriver::SCAN_16;
@@ -107,7 +110,9 @@ void commit() {
 //2 - advancing pixel
 //3 - image
 //4 - Debugging
-#define DRAW 3
+#define DRAW 5
+
+CommandProcessor commandProcessor;
 
 extern "C" int cpp_main(void) {
 	__HAL_DBGMCU_FREEZE_IWDG();
@@ -150,20 +155,16 @@ extern "C" int cpp_main(void) {
 
 	draw(PixelMapping::Pixel(32, 9), 255, 255, 255, 0);
 #elif DRAW == 5
+	Request input;
 
-//	uint8_t colVal = 255 / configuration->getWidth();
-//
-//	for (uint16_t col = 0; col < configuration.getWidth(); col++) {
-////		HAL_IWDG_Refresh(&hiwdg);
-//
-//		for (uint16_t row = 0; row < configuration.getHeight(); row++) {
-//			uint8_t r = colVal * col; //(row % 4) == 0 ? colVal * col : 0;
-//			uint8_t g = 0;//((row + 1) % 4) == 0 ? colVal * col : 0;
-//			uint8_t b = 0;//((row + 2) % 4) == 0 ? colVal * col : 0;
-//
-//			draw(PixelMapping::Pixel(col, row), r, g, b, 0);
-//		}
-//	}
+	input.type = RequestType::SetPixelData;
+	uint8_t source[] = { 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0x00 };
+	input.bodyLength = 12;
+
+	memcpy(input.body, source, input.bodyLength);
+
+	commandProcessor.ProcessRequest(&input, display);
+
 #endif
 
 	lastUpdate = HAL_GetTick();
@@ -269,26 +270,28 @@ extern "C" int cpp_main(void) {
 		}
 #elif DRAW == 5
 
-	uint16_t row = 31;
-	uint16_t col = pos % 128;
-
-	uint8_t r = 255; //(row % 4) == 0 ? colVal * col : 0;
-	uint8_t g = 0;//((row + 1) % 4) == 0 ? colVal * col : 0;
-	uint8_t b = 0;//((row + 2) % 4) == 0 ? colVal * col : 0;
-
-	PixelMapping::Pixel physicalPixel = pixelMapping->mapVirtualPixelToPhysicalPixel(PixelMapping::Pixel(col, row));
-
-	display->SetPixel(col, row, r, g, b, 0);
-
-	pos++;
-
-	if (pos > (configuration.getWidth() * configuration.getHeight())) {
-		pos = 0;
-	}
-
-	commit();
-
-	HAL_Delay(10);
+//		uint16_t row = 31;
+//		uint16_t col = pos % 128;
+//
+//		uint8_t r = 255; //(row % 4) == 0 ? colVal * col : 0;
+//		uint8_t g = 0; //((row + 1) % 4) == 0 ? colVal * col : 0;
+//		uint8_t b = 0; //((row + 2) % 4) == 0 ? colVal * col : 0;
+//
+//		PixelMapping::Pixel physicalPixel =
+//				pixelMapping->mapVirtualPixelToPhysicalPixel(
+//						PixelMapping::Pixel(col, row));
+//
+//		display->SetPixel(col, row, r, g, b, 0);
+//
+//		pos++;
+//
+//		if (pos > (configuration.getWidth() * configuration.getHeight())) {
+//			pos = 0;
+//		}
+//
+//		commit();
+//
+//		HAL_Delay(10);
 #endif
 
 //			for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
