@@ -43,7 +43,7 @@ void readConfiguration() {
 		configuration.elementHeight = PANEL_HEIGHT;
 		configuration.elementCount = 2;
 	} else if (configuration.useStrands) {
-		configuration.strandFormat = LedSingleWire::RGBW;
+		configuration.strandFormat = LedSingleWire::GRBW;
 		configuration.elementWidth = 300;
 		configuration.elementHeight = 1;
 		configuration.elementCount = 1;
@@ -106,11 +106,12 @@ void commit() {
 	}
 }
 
+//Test patterns.  Do not define for normal operation
 //1 - test pattern
 //2 - advancing pixel
 //3 - image
 //4 - Debugging
-#define DRAW 5
+//#define DRAW 5
 
 CommandProcessor commandProcessor;
 
@@ -158,13 +159,22 @@ extern "C" int cpp_main(void) {
 	Request input;
 
 	input.type = RequestType::SetPixelData;
-	uint8_t source[] = { 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0x00 };
-	input.bodyLength = 12;
+	uint8_t source[] = { 0x00, 0x01, 0x00, 0x00,
+			0xFF, 0x00, 0x00, 0x00,
+			0x00, 0xFF, 0x00, 0x00,
+			0x00, 0x00, 0xFF, 0x00,
+			0x00, 0x00, 0x00, 0xFF,
+			 };
+	input.bodyLength = 20;
 
 	memcpy(input.body, source, input.bodyLength);
 
 	commandProcessor.ProcessRequest(&input, display);
 
+	input.type = RequestType::Commit;
+	input.bodyLength = 0;
+
+	commandProcessor.ProcessRequest(&input, display);
 #endif
 
 	lastUpdate = HAL_GetTick();

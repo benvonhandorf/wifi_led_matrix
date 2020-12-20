@@ -39,6 +39,10 @@ void CommandProcessor::ProcessRequest(Request *request,
 
 		break;
 	}
+	case RequestType::Commit: {
+		display->SwapBuffer();
+		break;
+	}
 	}
 }
 

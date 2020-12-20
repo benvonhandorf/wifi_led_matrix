@@ -25,6 +25,7 @@ LedSingleWire::LedSingleWire(Format format, uint8_t strandCount,
 
 	switch (this->format) {
 	case RGBW:
+	case GRBW:
 		this->bytesPerPixel = 4;
 		break;
 	}
@@ -50,7 +51,7 @@ void LedSingleWire::Open() {
 
 	for (uint8_t strand = 0; strand < strandCount; strand++) {
 		for (uint16_t pixel = 0; pixel < pixelCount; pixel++) {
-			SetPixel(strand, pixel, 0, 0, 0, 0);
+			SetPixel( pixel, strand, 0, 0, 0, 0);
 		}
 	}
 
@@ -82,10 +83,22 @@ void LedSingleWire::SetPixel(uint16_t pixel, uint16_t strand, uint8_t r,
 		return;
 	}
 
-	uint32_t data = r << 24
-			| g << 16
-			| b << 8
-			| w ; //w
+	uint32_t data = 0;
+
+	switch(format) {
+	case RGBW:
+		data = r << 24
+		| g << 16
+		| b << 8
+		| w ;
+		break;
+	case GRBW:
+		data = g << 24
+		| r << 16
+		| b << 8
+		| w ;
+		break;
+	}
 
 	for (int8_t bit = 31; bit >= 0; bit--) {
 		buffer[offset] = buffer[offset] | strandMask;

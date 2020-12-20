@@ -10,7 +10,7 @@
 
 class LedSingleWire : public DisplayDriver {
 public:
-	enum Format { RGBW };
+	enum Format { RGBW, GRBW };
 
 	LedSingleWire(Format format, uint8_t strandCount, uint16_t pixelCount);
 

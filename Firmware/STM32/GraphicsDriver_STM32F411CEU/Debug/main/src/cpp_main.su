@@ -12,7 +12,7 @@ cpp_main.cpp:56:6:void configure()	16	static
 cpp_main.cpp:85:6:void open()	8	static
 cpp_main.cpp:93:6:void draw(PixelMapping::Pixel, uint8_t, uint8_t, uint8_t, uint8_t)	48	static
 cpp_main.cpp:103:6:void commit()	8	static
-cpp_main.cpp:117:16:int cpp_main()	1072	static
-cpp_main.cpp:309:1:void __static_initialization_and_destruction_0(int, int)	16	static
-cpp_main.cpp:309:1:cpp)	8	static
-cpp_main.cpp:309:1:cpp)	8	static
+cpp_main.cpp:117:16:int cpp_main()	1088	static
+cpp_main.cpp:318:1:void __static_initialization_and_destruction_0(int, int)	16	static
+cpp_main.cpp:318:1:cpp)	8	static
+cpp_main.cpp:318:1:cpp)	8	static
