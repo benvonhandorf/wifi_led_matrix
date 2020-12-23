@@ -24,7 +24,7 @@ extern UART_HandleTypeDef huart1;
 #define PANEL_WIDTH 64
 #define PANEL_HEIGHT 32
 
-char buffer[1024];
+uint8_t buffer[1024];
 
 uint32_t lastUpdate = 0;
 
@@ -90,21 +90,21 @@ void open() {
 	configuration.status = Configuration::Status::Ready;
 }
 
-void draw(PixelMapping::Pixel pixel, uint8_t r, uint8_t g, uint8_t b,
-		uint8_t w) {
-	if (display != NULL) {
-		PixelMapping::Pixel physicalPixel =
-				pixelMapping->mapVirtualPixelToPhysicalPixel(pixel);
+//void draw(PixelMapping::Pixel pixel, uint8_t r, uint8_t g, uint8_t b,
+//		uint8_t w) {
+//	if (display != NULL) {
+//		PixelMapping::Pixel physicalPixel =
+//				pixelMapping->mapVirtualPixelToPhysicalPixel(pixel);
+//
+//		display->SetPixel(physicalPixel.x, physicalPixel.y, r, g, b, w);
+//	}
+//}
 
-		display->SetPixel(physicalPixel.x, physicalPixel.y, r, g, b, w);
-	}
-}
-
-void commit() {
-	if (display != NULL) {
-		display->SwapBuffer();
-	}
-}
+//void commit() {
+//	if (display != NULL) {
+//		display->SwapBuffer();
+//	}
+//}
 
 //Test patterns.  Do not define for normal operation
 //1 - test pattern
@@ -112,8 +112,65 @@ void commit() {
 //3 - image
 //4 - Debugging
 //#define DRAW 5
-
+Request request;
 CommandProcessor commandProcessor;
+
+uint8_t spi_buffer[1024];
+
+bool parseSpi = false;
+
+//uint8_t state = 0;
+
+void RxCpltCallback(SPI_HandleTypeDef *hspi) {
+//	if (state == 0) {
+//		sprintf((char *)buffer, "RX: %d - %01x %02x\n", hspi1.RxXferCount,
+//				spi_buffer[0], spi_buffer[1]);
+//
+//		HAL_UART_Transmit(&huart1, buffer, strlen((char *)buffer), 2000);
+//
+//		if (spi_buffer[1] != 0) {
+//			state = 1;
+//
+//			HAL_SPI_Receive_IT(&hspi1, spi_buffer + 2, spi_buffer[1]);
+//		} else {
+//			request.type = spi_buffer[0];
+//			request.bodyLength = spi_buffer[1];
+//			request.Parse(spi_buffer, spi_buffer[1] + 2);
+//
+//			state = 0;
+//
+//			HAL_SPI_Receive_IT(&hspi1, spi_buffer, 2);
+//
+//			commandProcessor.ProcessRequest(&request, display);
+//		}
+//	} else {
+	parseSpi = true;
+//	}
+}
+
+void HAL_SPI_Error(SPI_HandleTypeDef *hspi) {
+	sprintf((char *)buffer, "ERROR\n");
+
+	HAL_UART_Transmit(&huart1, buffer, strlen((char *)buffer), 2000);
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	if (GPIO_Pin == IPS_NCS_Pin) {
+		if (IPS_NCS_GPIO_Port->IDR & IPS_NCS_Pin) {
+			HAL_SPI_Abort_IT(&hspi1);
+
+			hspi1.RxCpltCallback = RxCpltCallback;
+			hspi1.AbortCpltCallback = RxCpltCallback;
+
+			HAL_SPI_Receive_IT(&hspi1, spi_buffer, 1024);
+		} else {
+			if(parseSpi) {
+				//We're running ahead of our ability to parse.  Asplode?
+			}
+
+		}
+	}
+}
 
 extern "C" int cpp_main(void) {
 	__HAL_DBGMCU_FREEZE_IWDG();
@@ -123,6 +180,9 @@ extern "C" int cpp_main(void) {
 	configure();
 
 	open();
+
+	HAL_NVIC_EnableIRQ(SPI1_IRQn);
+	HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
 	uint16_t color_shift = 1;
 
@@ -183,13 +243,19 @@ extern "C" int cpp_main(void) {
 
 	uint32_t duration = HAL_GetTick() - start;
 
-	sprintf(buffer, "Setup Duration: %lu\n", duration);
+	sprintf((char *)buffer, "Setup Duration: %lu\n", duration);
 
-	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 500);
-
-	commit();
+	HAL_UART_Transmit(&huart1, buffer, strlen((char *)buffer), 500);
 
 	while (1) {
+
+		if(parseSpi) {
+			request.Parse(spi_buffer, 1024);
+
+			parseSpi = false;
+
+			commandProcessor.ProcessRequest(&request, display);
+		}
 
 //		HAL_IWDG_Refresh(&hiwdg);
 

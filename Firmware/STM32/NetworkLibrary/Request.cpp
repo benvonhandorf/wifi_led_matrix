@@ -25,10 +25,6 @@ bool Request::Parse(uint8_t *data, uint16_t dataLength) {
 	type = data[0];
 	bodyLength = (data[1] << 8) | data[2];
 
-	if (bodyLength != dataLength - 3) {
-		return false;
-	}
-
 	memcpy(this->body, data + 3, bodyLength);
 
 	switch (type) {

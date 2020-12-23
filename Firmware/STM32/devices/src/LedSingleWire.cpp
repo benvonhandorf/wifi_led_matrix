@@ -10,6 +10,7 @@
 #include "LedSingleWire.h"
 
 extern TIM_HandleTypeDef htim1;
+extern TIM_HandleTypeDef htim3;
 extern DMA_HandleTypeDef hdma_tim1_ch1;
 
 #define SLOTS_PER_BIT 4
@@ -17,6 +18,11 @@ extern DMA_HandleTypeDef hdma_tim1_ch1;
 #define LEAD_IN 4
 #define LEAD_OUT 4
 
+LedSingleWire *instance;
+
+void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim) {
+	instance->StartNextDma();
+}
 
 LedSingleWire::LedSingleWire(Format format, uint8_t strandCount,
 		uint16_t pixelCount) {
@@ -33,7 +39,10 @@ LedSingleWire::LedSingleWire(Format format, uint8_t strandCount,
 	//Each time division will be ~ 0.3uS.  0 looks like 0.3us/0.9us.  1 looks like 0.6us/0.6us so
 	//each bit requires 4 time divisions
 	this->pixelCount = pixelCount;
-	this->bufferLength = (SLOTS_PER_BIT * bytesPerPixel * 8 * pixelCount) + LEAD_IN + LEAD_OUT;
+	this->bufferLength = (SLOTS_PER_BIT * bytesPerPixel * 8 * pixelCount)
+			+ LEAD_IN + LEAD_OUT;
+
+	instance = this;
 }
 
 void LedSingleWire::Open() {
@@ -42,7 +51,7 @@ void LedSingleWire::Open() {
 	//Blanks the string
 
 	for (uint16_t offset = 0; offset < bufferLength; offset++) {
-		if(offset < LEAD_IN || offset > LEAD_OUT) {
+		if (offset < LEAD_IN || offset > LEAD_OUT) {
 			buffer[offset] = 0x0000;
 		} else {
 			buffer[offset] = 0xFFFF;
@@ -51,7 +60,7 @@ void LedSingleWire::Open() {
 
 	for (uint8_t strand = 0; strand < strandCount; strand++) {
 		for (uint16_t pixel = 0; pixel < pixelCount; pixel++) {
-			SetPixel( pixel, strand, 0, 0, 0, 0);
+			SetPixel(pixel, strand, 0, 0, 0, 0);
 		}
 	}
 
@@ -59,9 +68,13 @@ void LedSingleWire::Open() {
 
 	TIM_CCxChannelCmd(htim1.Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
 
+	__HAL_TIM_ENABLE_IT(&htim3, TIM_IT_CC1);
+
+//	htim3.OC_DelayElapsedCallback = ResetDelayElapsed;
+
 	HAL_TIM_Base_Start_IT(&htim1);
 
-	StartNextDma();
+	SendStands();
 }
 
 void LedSingleWire::Close() {
@@ -85,18 +98,12 @@ void LedSingleWire::SetPixel(uint16_t pixel, uint16_t strand, uint8_t r,
 
 	uint32_t data = 0;
 
-	switch(format) {
+	switch (format) {
 	case RGBW:
-		data = r << 24
-		| g << 16
-		| b << 8
-		| w ;
+		data = r << 24 | g << 16 | b << 8 | w;
 		break;
 	case GRBW:
-		data = g << 24
-		| r << 16
-		| b << 8
-		| w ;
+		data = g << 24 | r << 16 | b << 8 | w;
 		break;
 	}
 
@@ -118,14 +125,18 @@ void LedSingleWire::SetPixel(uint16_t pixel, uint16_t strand, uint8_t r,
 }
 
 void LedSingleWire::SwapBuffer() {
-	StartNextDma();
+	SendStands();
+}
+
+void LedSingleWire::SendStands() {
+	//Reset signal
+	LED_CLK_GPIO_Port->ODR = 0x00;
+
+	htim3.Instance->EGR = TIM_EGR_UG;
+	HAL_TIM_Base_Start_IT(&htim3);
 }
 
 void LedSingleWire::StartNextDma() {
-	//Reset signal
-	LED_CLK_GPIO_Port->ODR = 0x00;
-	HAL_Delay(80);
-
 	//14 is 300nS
 	htim1.Instance->ARR = 18;
 	htim1.Instance->EGR = TIM_EGR_UG;

@@ -23,8 +23,10 @@ public:
 
 	void SwapBuffer();
 
-private:
 	void StartNextDma();
+
+private:
+	void SendStands();
 
 	Format format;
 	uint8_t bytesPerPixel;

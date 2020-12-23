@@ -43,6 +43,11 @@ endif
 
 -include ../makefile.defs
 
+BUILD_ARTIFACT_NAME := GraphicsDriver_F411
+BUILD_ARTIFACT_EXTENSION := elf
+BUILD_ARTIFACT_PREFIX := 
+BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME).$(BUILD_ARTIFACT_EXTENSION)
+
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
 GraphicsDriver_F411.elf \
@@ -58,7 +63,10 @@ GraphicsDriver_F411.bin \
 
 
 # All Target
-all: GraphicsDriver_F411.elf secondary-outputs
+all: main-build
+
+# Main-build Target
+main-build: GraphicsDriver_F411.elf secondary-outputs
 
 # Tool invocations
 GraphicsDriver_F411.elf: $(OBJS) $(USER_OBJS) /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_F411/STM32F411RETX_FLASH.ld
@@ -88,7 +96,14 @@ clean:
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_BIN)
 
-.PHONY: all clean dependents
+fail-specified-linker-script-missing:
+	@echo 'Error: Cannot find the specified linker script. Check the linker settings in the build configuration.'
+	@exit 2
+
+warn-no-linker-script-specified:
+	@echo 'Warning: No linker script specified. Check the linker settings in the build configuration.'
+
+.PHONY: all clean dependents fail-specified-linker-script-missing warn-no-linker-script-specified
 .SECONDARY:
 
 -include ../makefile.targets
