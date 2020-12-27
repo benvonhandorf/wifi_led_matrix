@@ -20,16 +20,100 @@ esp_err_t event_handler(void *ctx, system_event_t *event) {
 uint8_t txBuffer[1024];
 uint8_t rxBuffer[1024];
 
-void setup_strand() {
+void write_strand(spi_device_handle_t *spi, uint16_t x, uint16_t pixels,
+		uint8_t *values) {
+	spi_transaction_t txTrans = {
+
+	};
+
+	uint16_t offset = 0;
+
+	txBuffer[offset++] = 0x01;
+	txBuffer[offset++] = 0x00;
+	txBuffer[offset++] = 0x00;
+
+	txBuffer[offset++] = x / 256;
+	txBuffer[offset++] = x % 256;
+	txBuffer[offset++] = 0x00;
+	txBuffer[offset++] = 0x00;
+
+	uint16_t valueOffset = 0;
+
+	for (uint16_t i = 0; i < pixels; i++) {
+		txBuffer[offset++] = values[valueOffset++];
+		txBuffer[offset++] = values[valueOffset++];
+		txBuffer[offset++] = values[valueOffset++];
+		txBuffer[offset++] = values[valueOffset++];
+	}
+
+	uint16_t bodyBytes = offset - 3;
+	txBuffer[1] = ((uint8_t) (bodyBytes / 256));
+	txBuffer[2] = ((uint8_t) (bodyBytes % 256));
+
+	txTrans.rx_buffer = NULL;
+	txTrans.tx_buffer = txBuffer;
+	txTrans.length = 263 * 8;
+	txTrans.rxlength = 0;
+
 	esp_err_t ret;
+
+	ESP_LOGI("StrandTask", "Data: %d - %d - %d  %d", x, txBuffer[1], txBuffer[2], bodyBytes);
+
+	ret = spi_device_polling_transmit(*spi, &txTrans);
+	ESP_ERROR_CHECK(ret);
+}
+
+void commit_strand(spi_device_handle_t *spi) {
+	uint16_t offset = 0;
+	txBuffer[offset++] = 0x02;
+	txBuffer[offset++] = 0x00;
+	txBuffer[offset++] = 0x00;
+
+	spi_transaction_t txTrans = {
+
+	};
+
+	txTrans.tx_buffer = txBuffer;
+	txTrans.rx_buffer = NULL;
+	txTrans.length = 263 * 8;
+	txTrans.rxlength = 0;
+
+	esp_err_t ret;
+
+	ESP_LOGI("StrandTask", "Commit");
+
+	ret = spi_device_polling_transmit(*spi, &txTrans);
+	ESP_ERROR_CHECK(ret);
+}
+
+void strandTask(void *pvParameters) {
+	ESP_LOGI("StrandTask", "Task start");
+
+	esp_err_t ret;
+
+	gpio_config_t gpio_conf = {
+		.pin_bit_mask = 1 << 4,
+		.mode = GPIO_MODE_OUTPUT };
+
+	ESP_ERROR_CHECK(gpio_config(&gpio_conf));
+	ESP_ERROR_CHECK(gpio_set_level(4, 0));
+
 	spi_device_handle_t spi;
-	spi_bus_config_t buscfg = { .miso_io_num = PIN_NUM_MISO, .mosi_io_num =
-	PIN_NUM_MOSI, .sclk_io_num = PIN_NUM_CLK, .quadwp_io_num = -1,
-			.quadhd_io_num = -1, .max_transfer_sz = 1024 };
-	spi_device_interface_config_t devcfg = { .clock_speed_hz = 1 * 1000 * 1000, //Clock out at 10 MHz
-			.mode = 0,                                //SPI mode 0
-			.spics_io_num = PIN_NUM_CS,               //CS pin
-			.queue_size = 1, .command_bits = 0, .address_bits = 0 };
+	spi_bus_config_t buscfg = {
+		.miso_io_num = PIN_NUM_MISO,
+		.mosi_io_num =
+		PIN_NUM_MOSI,
+		.sclk_io_num = PIN_NUM_CLK,
+		.quadwp_io_num = -1,
+		.quadhd_io_num = -1 };
+	spi_device_interface_config_t devcfg = {
+		.clock_speed_hz = (APB_CLK_FREQ / 15), //SPI_MASTER_FREQ_8M,
+		.mode = 0,          //SPI mode 0
+		.spics_io_num = PIN_NUM_CS, //CS pin
+		.queue_size = 1,
+		.command_bits = 0,
+		.address_bits = 0,
+		.dummy_bits = 0 };
 
 	spi_transaction_t txTrans = {
 
@@ -41,86 +125,85 @@ void setup_strand() {
 	ret = spi_bus_add_device(SPI3_HOST, &devcfg, &spi);
 	ESP_ERROR_CHECK(ret);
 
-	uint16_t offset = 0;
+	uint16_t shift = 0;
+	uint16_t pixels = 64;
+	uint8_t pixelData[4 * pixels];
 
-	txBuffer[offset++] = 0x01;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
+	while (1) {
+		ESP_LOGI("StrandTask", "Loop, shift %d", shift);
+#if 0
+		for (uint16_t x = 0; x < 300; x += pixels) {
 
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
+			for (uint16_t i = 0; i < pixels; i++) {
+				uint16_t offset = i * 4;
 
-	txBuffer[offset++] = 0xFF;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
+				pixelData[offset++] = ((i + shift) % 2 == 0) ? 0xFF : 0x00;
+				pixelData[offset++] = ((i + shift) % 2 == 1) ? 0xFF : 0x00;
+				pixelData[offset++] = 0x00;
+				pixelData[offset++] = 0x00;
 
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0xFF;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
+			}
 
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0xFF;
-	txBuffer[offset++] = 0x00;
+			write_strand(&spi, x, pixels, pixelData);
+			vTaskDelay(100 / portTICK_PERIOD_MS);
+		}
+#else
+		if (shift > 310) {
+			shift = 0;
+		}
 
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0xFF;
+		for (uint16_t sectionStart = 0; sectionStart < 300; sectionStart +=
+				pixels) {
 
-	txBuffer[offset++] = 0xFF;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
+			for (uint16_t i = 0; i < pixels; i++) {
+				uint16_t x = sectionStart + i;
+				uint16_t offset = i * 4;
 
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0xFF;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
+				int16_t redDelta = ((int16_t) shift) - x;
 
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0xFF;
-	txBuffer[offset++] = 0x00;
+				int16_t greenDelta = ((int16_t) 300 - shift) - x;
 
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0xFF;
+//				pixelData[offset++] = 0x55;
+//				pixelData[offset++] = 0xAA;
+//				pixelData[offset++] = 0x55;
+//				pixelData[offset++] = 0x00;
 
-	txBuffer[1] = (offset - 3) / 255;
-	txBuffer[2] = (offset - 3) % 255;
+				if (redDelta < 6 && redDelta >= 0) {
+					pixelData[offset++] = (6 - redDelta) * 10;
+				} else {
+					pixelData[offset++] = 0x00;
+				}
+				if (greenDelta <= 0 && greenDelta > -6) {
+					pixelData[offset++] = (greenDelta + 6) * 10;
+				} else {
+					pixelData[offset++] = 0x00;
+				}
+//				if (x == shift) {
+//					pixelData[offset++] = 0xFF;
+//					pixelData[offset++] = 0xFF;
+//				} else {
+//					pixelData[offset++] = 0x00;
+//					pixelData[offset++] = 0x00;
+//				}
+				pixelData[offset++] = 0x00;
+				pixelData[offset++] = 0x00;
+			}
 
-	txTrans.rx_buffer = rxBuffer;
-	txTrans.tx_buffer = txBuffer;
-	txTrans.length = offset * 8;
-	txTrans.rxlength = txTrans.length;
+			ESP_ERROR_CHECK(gpio_set_level(4, 1));
+			write_strand(&spi, sectionStart, pixels, pixelData);
+			ESP_ERROR_CHECK(gpio_set_level(4, 0));
+			vTaskDelay(10 / portTICK_PERIOD_MS);
+		}
+#endif
 
-	ret = spi_device_polling_transmit(spi, &txTrans);
-	ESP_ERROR_CHECK(ret);
+		ESP_ERROR_CHECK(gpio_set_level(4, 1));
+		commit_strand(&spi);
+		ESP_ERROR_CHECK(gpio_set_level(4, 0));
 
-	vTaskDelay(1000 / portTICK_PERIOD_MS);
+		vTaskDelay(20 / portTICK_PERIOD_MS);
 
-	offset = 0;
-	txBuffer[offset++] = 0x02;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
-
-	txBuffer[1] = (offset - 3) / 255;
-	txBuffer[2] = (offset - 3) / 255;
-
-	txTrans.tx_buffer = txBuffer;
-	txTrans.length = offset * 8;
-	txTrans.rxlength = txTrans.length;
-
-	ret = spi_device_polling_transmit(spi, &txTrans);
-	ESP_ERROR_CHECK(ret);
-
-	ESP_LOGI("SPI", "Serial data sent\n");
+		shift++;
+	}
 }
 
 void app_main(void) {
@@ -132,20 +215,28 @@ void app_main(void) {
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
 	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-	wifi_config_t sta_config = { .sta = { .ssid = CONFIG_ESP_WIFI_SSID,
-			.password = CONFIG_ESP_WIFI_PASSWORD, .bssid_set = false } };
+	wifi_config_t sta_config = {
+		.sta = {
+			.ssid = CONFIG_ESP_WIFI_SSID,
+			.password = CONFIG_ESP_WIFI_PASSWORD,
+			.bssid_set = false } };
 	ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_config));
 	ESP_ERROR_CHECK(esp_wifi_start());
 	ESP_ERROR_CHECK(esp_wifi_connect());
 
-	setup_strand();
+	ESP_LOGI("main", "Before task creation");
 
-	gpio_set_direction(GPIO_NUM_4, GPIO_MODE_OUTPUT);
-	int level = 0;
-	while (true) {
-		gpio_set_level(GPIO_NUM_4, level);
-		level = !level;
-		vTaskDelay(300 / portTICK_PERIOD_MS);
+	xTaskHandle taskHandle;
+
+	xTaskCreatePinnedToCore(strandTask, "StrandTask", 10000, NULL,
+	tskIDLE_PRIORITY + 10, &taskHandle, 1);
+
+	ESP_LOGI("main", "Before scheduler start");
+
+	while (1) {
+		vTaskDelay(5000 / portTICK_PERIOD_MS);
 	}
+
+	ESP_LOGI("main", "After scheduler start");
 }
 

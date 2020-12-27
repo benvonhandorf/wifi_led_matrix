@@ -83,6 +83,10 @@ void LedSingleWire::Close() {
 
 void LedSingleWire::SetPixel(uint16_t pixel, uint16_t strand, uint8_t r,
 		uint8_t g, uint8_t b, uint8_t w) {
+	if (pixel >= pixelCount || strand >= strandCount) {
+		return;
+	}
+
 	uint16_t strandMask = 0x00;
 
 	uint16_t offset = (SLOTS_PER_BIT * bytesPerPixel * 8 * pixel) + LEAD_IN;
@@ -138,7 +142,7 @@ void LedSingleWire::SendStands() {
 
 void LedSingleWire::StartNextDma() {
 	//14 is 300nS
-	htim1.Instance->ARR = 18;
+	htim1.Instance->ARR = 30;	//17;//18
 	htim1.Instance->EGR = TIM_EGR_UG;
 
 	HAL_DMA_Start_IT(&hdma_tim1_ch1, (uint32_t) buffer,

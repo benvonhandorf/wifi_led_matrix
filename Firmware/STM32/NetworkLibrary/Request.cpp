@@ -10,7 +10,9 @@
 #include <string.h>
 
 Request::Request() {
-
+	for (int c = 0; c < NETWORK_PACKET_MAXIMUM_SIZE; c++) {
+		body[c] = 0x00;
+	}
 }
 
 Request::~Request() {
@@ -30,9 +32,11 @@ bool Request::Parse(uint8_t *data, uint16_t dataLength) {
 	switch (type) {
 	case RequestType::SetPixelData:
 		return ParseSetPixelDataRequest();
+	case RequestType::Commit:
+		return true;
 	}
 
-	return true;
+	return false;
 }
 
 bool Request::ParseSetPixelDataRequest() {

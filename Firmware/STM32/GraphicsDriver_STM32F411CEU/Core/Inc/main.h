@@ -64,6 +64,8 @@ void Error_Handler(void);
 #define LED_0_GPIO_Port GPIOA
 #define LED_1_Pin GPIO_PIN_2
 #define LED_1_GPIO_Port GPIOA
+#define STATE_Pin GPIO_PIN_3
+#define STATE_GPIO_Port GPIOA
 #define IPS_NCS_Pin GPIO_PIN_4
 #define IPS_NCS_GPIO_Port GPIOA
 #define IPS_NCS_EXTI_IRQn EXTI4_IRQn

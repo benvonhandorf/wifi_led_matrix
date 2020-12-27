@@ -16,6 +16,7 @@
 #include "CommandProcessor.h"
 
 //extern IWDG_HandleTypeDef hiwdg;
+DMA_HandleTypeDef hdma_spi1_rx;
 
 extern SPI_HandleTypeDef hspi1;
 
@@ -49,8 +50,8 @@ void readConfiguration() {
 		configuration.elementCount = 1;
 	}
 
-	configuration.pixelConfiguration =
-			Configuration::PixelConfiguration::SnakeStartBottomRight;
+//	configuration.pixelConfiguration =
+//			Configuration::PixelConfiguration::SnakeStartBottomRight;
 }
 
 void configure() {
@@ -90,34 +91,46 @@ void open() {
 	configuration.status = Configuration::Status::Ready;
 }
 
-//void draw(PixelMapping::Pixel pixel, uint8_t r, uint8_t g, uint8_t b,
-//		uint8_t w) {
-//	if (display != NULL) {
-//		PixelMapping::Pixel physicalPixel =
-//				pixelMapping->mapVirtualPixelToPhysicalPixel(pixel);
-//
-//		display->SetPixel(physicalPixel.x, physicalPixel.y, r, g, b, w);
-//	}
-//}
+void draw(PixelMapping::Pixel pixel, uint8_t r, uint8_t g, uint8_t b,
+		uint8_t w) {
+	if (display != NULL) {
+		PixelMapping::Pixel physicalPixel =
+				pixelMapping->mapVirtualPixelToPhysicalPixel(pixel);
 
-//void commit() {
-//	if (display != NULL) {
-//		display->SwapBuffer();
-//	}
-//}
+		display->SetPixel(physicalPixel.x, physicalPixel.y, r, g, b, w);
+	}
+}
+
+void commit() {
+	if (display != NULL) {
+		display->SwapBuffer();
+	}
+}
 
 //Test patterns.  Do not define for normal operation
 //1 - test pattern
 //2 - advancing pixel
 //3 - image
 //4 - Debugging
-//#define DRAW 5
+//#define DRAW 3
+
 Request request;
 CommandProcessor commandProcessor;
 
-uint8_t spi_buffer[1024];
+struct RxBuffer {
+	RxBuffer() {
+		for (int c = 0; c < 1021; c++) {
+			buffer[c] = 0x00;
+		}
+	}
+	volatile bool inUse = false;
+	volatile bool ready = false;
+	uint8_t buffer[1024];
+};
 
-bool parseSpi = false;
+#define RX_BUFFERS 3
+RxBuffer receiveBuffers[RX_BUFFERS];
+volatile RxBuffer *currentBuffer = NULL;
 
 //uint8_t state = 0;
 
@@ -144,30 +157,53 @@ void RxCpltCallback(SPI_HandleTypeDef *hspi) {
 //			commandProcessor.ProcessRequest(&request, display);
 //		}
 //	} else {
-	parseSpi = true;
+	currentBuffer->ready = true;
+	currentBuffer->inUse = false;
+	currentBuffer = NULL;
 //	}
 }
 
 void HAL_SPI_Error(SPI_HandleTypeDef *hspi) {
-	sprintf((char *)buffer, "ERROR\n");
+	sprintf((char*) buffer, "ERROR\n");
 
-	HAL_UART_Transmit(&huart1, buffer, strlen((char *)buffer), 2000);
+	HAL_UART_Transmit(&huart1, buffer, strlen((char*) buffer), 2000);
+}
+
+void BeginReceive() {
+	__disable_irq();
+
+	if (currentBuffer != NULL) {
+		currentBuffer->inUse = false;
+		currentBuffer = NULL;
+	}
+
+	for (int i = 0; i < RX_BUFFERS; i++) {
+		if (!receiveBuffers[i].ready && !currentBuffer->inUse) {
+			currentBuffer = &(receiveBuffers[i]);
+			currentBuffer->inUse = true;
+			break;
+		}
+	}
+
+	__enable_irq();
+
+	if (currentBuffer != NULL) {
+		hspi1.RxCpltCallback = RxCpltCallback;
+
+		HAL_SPI_Receive_IT(&hspi1, (uint8_t*) currentBuffer->buffer, 263); //Was 1024
+	} else {
+		//We'll miss the next SPI transaction
+	}
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == IPS_NCS_Pin) {
 		if (IPS_NCS_GPIO_Port->IDR & IPS_NCS_Pin) {
-			HAL_SPI_Abort_IT(&hspi1);
-
-			hspi1.RxCpltCallback = RxCpltCallback;
-			hspi1.AbortCpltCallback = RxCpltCallback;
-
-			HAL_SPI_Receive_IT(&hspi1, spi_buffer, 1024);
-		} else {
-			if(parseSpi) {
-				//We're running ahead of our ability to parse.  Asplode?
-			}
-
+//			HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_SET);
+//			HAL_SPI_Abort(&hspi1);
+//			HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_RESET);
+			HAL_NVIC_DisableIRQ(EXTI4_IRQn);
+			BeginReceive();
 		}
 	}
 }
@@ -183,6 +219,8 @@ extern "C" int cpp_main(void) {
 
 	HAL_NVIC_EnableIRQ(SPI1_IRQn);
 	HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+
+//	BeginReceive();
 
 	uint16_t color_shift = 1;
 
@@ -243,25 +281,57 @@ extern "C" int cpp_main(void) {
 
 	uint32_t duration = HAL_GetTick() - start;
 
-	sprintf((char *)buffer, "Setup Duration: %lu\n", duration);
+	sprintf((char*) buffer, "Setup Duration: %lu\n", duration);
 
-	HAL_UART_Transmit(&huart1, buffer, strlen((char *)buffer), 500);
+	HAL_UART_Transmit(&huart1, buffer, strlen((char*) buffer), 500);
 
 	while (1) {
+#ifndef DRAW
 
-		if(parseSpi) {
-			request.Parse(spi_buffer, 1024);
+		for (int i = 0; i < RX_BUFFERS; i++) {
+//			start = HAL_GetTick();
 
-			parseSpi = false;
+			if (receiveBuffers[i].ready && !receiveBuffers[i].inUse) {
 
-			commandProcessor.ProcessRequest(&request, display);
+				HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_SET);
+
+				if (!request.Parse(receiveBuffers[i].buffer, 263)) {
+					uint16_t firstNonZero = 0;
+					for (int c = 0; c < 260; c++) {
+						if (request.body[c] != 0x00) {
+							firstNonZero = c;
+							break;
+						}
+					}
+
+					sprintf((char*) buffer, "UNK: %d %02x - %d fnz: %x\r\n", i,
+							duration, request.type, request.bodyLength,
+							firstNonZero);
+
+					HAL_UART_Transmit(&huart1, buffer, strlen((char*) buffer),
+							100);
+				}
+
+				receiveBuffers[i].ready = false;
+
+				if (currentBuffer == NULL) {
+					BeginReceive();
+				}
+
+				commandProcessor.ProcessRequest(&request, display);
+
+//				uint32_t duration = HAL_GetTick() - start;
+
+				HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_RESET);
+			}
 		}
+//		HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_RESET);
 
 //		HAL_IWDG_Refresh(&hiwdg);
 
 //		HAL_Delay(5);
 
-#if DRAW == 1
+#elif DRAW == 1
 	for (uint16_t col = 0; col < configuration.getWidth(); col++) {
 		for (uint16_t row = 0; row < configuration.getHeight(); row++) {
 
@@ -281,36 +351,37 @@ extern "C" int cpp_main(void) {
 //		HAL_Delay(5);
 
 #elif DRAW == 2
-	//pos 64:
-	//Panel 1: Red on row 1, Green on row 2, faint green on row 13, flickering red on row 15, all in col 0
-	//flickering red about halfway across row 15
-	//Panel 2: Red on row 1, Blue on row 2, looks steady
+		//pos 64:
+		//Panel 1: Red on row 1, Green on row 2, faint green on row 13, flickering red on row 15, all in col 0
+		//flickering red about halfway across row 15
+		//Panel 2: Red on row 1, Blue on row 2, looks steady
 //			pos = 65;
 
-	for (uint16_t col = 0; col < configuration.getWidth(); col++) {
-		for (uint16_t row = 0; row < configuration.getHeight(); row++) {
+		HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_SET);
 
-			uint8_t r =
-			row == (pos / 64) && col == (pos % 64) ? 255 : 0;
-			uint8_t g =
-			row == (pos / 64) + 1 && col == (pos % 64) ?
-			255 : 0;
-			uint8_t b =
-			row == (pos / 64) + 2 && col == (pos % 64) ?
-			255 : 0;
+		for (uint16_t col = 0; col < configuration.getWidth(); col++) {
+			for (uint16_t row = 0; row < configuration.getHeight(); row++) {
 
-			if(r > 0 || g > 0 || b > 0 ) {
-				display->(PixelMapping::Pixel(col, row), r, g, b, 0);
+				uint8_t r = row == (pos / 64) && col == (pos % 64) ? 255 : 0;
+				uint8_t g =
+						row == (pos / 64) + 1 && col == (pos % 64) ? 255 : 0;
+				uint8_t b =
+						row == (pos / 64) + 2 && col == (pos % 64) ? 255 : 0;
+
+				if (r > 0 || g > 0 || b > 0) {
+					draw(PixelMapping::Pixel(col, row), r, g, b, 0);
+				}
 			}
 		}
-	}
-	pos++;
+		pos++;
 
-	if (pos > (configuration.getWidth() * configuration.getHeight())) {
-		pos = 0;
-	}
+		if (pos > (configuration.getWidth() * configuration.getHeight())) {
+			pos = 0;
+		}
 
-	commit();
+		commit();
+
+		HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_RESET);
 #elif DRAW == 3
 
 //		HAL_Delay(5);
@@ -369,17 +440,5 @@ extern "C" int cpp_main(void) {
 //
 //		HAL_Delay(10);
 #endif
-
-//			for (uint16_t row = 0; row < PANEL_HEIGHT; row++) {
-//				for (uint16_t col = 0; col < PANEL_WIDTH; col++) {
-//					uint8_t r, g, b;
-//
-//					r = ((row + col + color_shift) % 4) == 0 ? 255 : 0;
-//					g = ((row + col + color_shift) % 4) == 1 ? 255 : 0;
-//					b = ((row + col + color_shift) % 4) == 2 ? 255 : 0;
-//
-//					matrix.SetPixel(col, row, r, g, b);
-//				}
-//			}
 	}
 }
