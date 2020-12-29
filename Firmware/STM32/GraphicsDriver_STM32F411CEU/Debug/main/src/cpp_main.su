@@ -5,7 +5,7 @@ PixelMapping.h:35:2:LeftToRightPixelMapping::LeftToRightPixelMapping(uint8_t, ui
 PixelMapping.h:41:8:virtual PixelMapping::Pixel LeftToRightPixelMapping::mapVirtualPixelToPhysicalPixel(PixelMapping::Pixel)	32	static
 PixelMapping.h:68:2:SnakePixelMappingFedBottomRight::SnakePixelMappingFedBottomRight(uint8_t, uint16_t, uint16_t)	24	static
 PixelMapping.h:74:8:virtual PixelMapping::Pixel SnakePixelMappingFedBottomRight::mapVirtualPixelToPhysicalPixel(PixelMapping::Pixel)	32	static
-configuration.h:11:8:Configuration::Configuration()	16	static
+configuration.h:13:8:Configuration::Configuration()	16	static
 cpp_main.cpp:37:6:void readConfiguration()	4	static
 PixelMapping.h:26:7:constexpr SimplePixelMapping::SimplePixelMapping()	16	static
 cpp_main.cpp:57:6:void configure()	16	static

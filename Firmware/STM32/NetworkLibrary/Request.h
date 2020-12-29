@@ -24,6 +24,7 @@ public:
 
 private:
 	bool ParseSetPixelDataRequest();
+	bool ParseClearPixelDataRequest();
 };
 
 #endif /* REQUEST_H_ */

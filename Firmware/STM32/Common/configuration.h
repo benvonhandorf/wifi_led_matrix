@@ -8,6 +8,8 @@
 #ifndef INC_CONFIGURATION_H_
 #define INC_CONFIGURATION_H_
 
+#include <stdint.h>
+
 struct Configuration {
 public:
 	bool useMatrix;

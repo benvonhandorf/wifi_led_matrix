@@ -16,8 +16,8 @@ CommandProcessor::~CommandProcessor() {
 	// TODO Auto-generated destructor stub
 }
 
-void CommandProcessor::ProcessRequest(Request *request,
-		DisplayDriver *display) {
+void CommandProcessor::ProcessRequest(Request *request, DisplayDriver *display,
+		Configuration *configuration) {
 	switch (request->type) {
 	case RequestType::SetPixelData: {
 		uint16_t x = request->body[0] << 8 | request->body[1];
@@ -35,6 +35,33 @@ void CommandProcessor::ProcessRequest(Request *request,
 
 			pixelStart += 4;
 			x++;
+		}
+
+		break;
+	}
+
+	case RequestType::ClearAssignPixelData: {
+		for (uint16_t x = 0; x < configuration->getWidth(); x++) {
+			for (uint16_t y = 0; y < configuration->getHeight(); y++) {
+				display->SetPixel(x, y, 0, 0, 0, 0);
+			}
+		}
+		//No break.  Proceed to assign pixel data
+	}
+	case RequestType::AssignPixelData: {
+		for (uint16_t offset = 0; offset < request->bodyLength; offset += 8) {
+
+			uint16_t x = request->body[offset + 0] << 8
+					| request->body[offset + 1];
+			uint16_t y = request->body[offset + 2] << 8
+					| request->body[offset + 3];
+
+			uint8_t r = request->body[offset + 4];
+			uint8_t g = request->body[offset + 5];
+			uint8_t b = request->body[offset + 6];
+			uint8_t w = request->body[offset + 7];
+
+			display->SetPixel(x, y, r, g, b, w);
 		}
 
 		break;

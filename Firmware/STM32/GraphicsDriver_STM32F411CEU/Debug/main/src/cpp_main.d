@@ -34,7 +34,8 @@ main/src/cpp_main.o: \
  /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/../devices/inc/MatrixDriver.h \
  /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/../devices/inc/LedSingleWire.h \
  /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/../data/inc/image.h \
- ../Core/Inc/configuration.h ../Core/Inc/PixelMapping.h \
+ /home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/configuration.h \
+ ../Core/Inc/PixelMapping.h \
  /home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Protocol.h \
  /home/benvh/projects/wifi_led_matrix/Firmware/STM32/CommandLibrary/CommandProcessor.h \
  /home/benvh/projects/wifi_led_matrix/Firmware/STM32/NetworkLibrary/Request.h
@@ -109,7 +110,7 @@ main/src/cpp_main.o: \
 
 /home/benvh/projects/wifi_led_matrix/Firmware/STM32/GraphicsDriver_STM32F411CEU/../data/inc/image.h:
 
-../Core/Inc/configuration.h:
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/configuration.h:
 
 ../Core/Inc/PixelMapping.h:
 

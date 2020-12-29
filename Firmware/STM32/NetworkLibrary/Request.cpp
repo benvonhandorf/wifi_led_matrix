@@ -30,6 +30,9 @@ bool Request::Parse(uint8_t *data, uint16_t dataLength) {
 	memcpy(this->body, data + 3, bodyLength);
 
 	switch (type) {
+	case RequestType::ClearAssignPixelData:
+	case RequestType::AssignPixelData:
+		return ParseClearPixelDataRequest();
 	case RequestType::SetPixelData:
 		return ParseSetPixelDataRequest();
 	case RequestType::Commit:
@@ -41,6 +44,14 @@ bool Request::Parse(uint8_t *data, uint16_t dataLength) {
 
 bool Request::ParseSetPixelDataRequest() {
 	if (bodyLength % 4 != 0 || bodyLength == 4) {
+		return false;
+	}
+
+	return true;
+}
+
+bool Request::ParseClearPixelDataRequest() {
+	if (bodyLength % 8 != 0) {
 		return false;
 	}
 

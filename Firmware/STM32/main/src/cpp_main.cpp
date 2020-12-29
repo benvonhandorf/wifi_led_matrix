@@ -318,7 +318,7 @@ extern "C" int cpp_main(void) {
 					BeginReceive();
 				}
 
-				commandProcessor.ProcessRequest(&request, display);
+				commandProcessor.ProcessRequest(&request, display, &configuration);
 
 //				uint32_t duration = HAL_GetTick() - start;
 

@@ -10,13 +10,15 @@
 
 #include "DisplayDriver.h"
 #include "Request.h"
+#include "configuration.h"
 
 class CommandProcessor {
 public:
 	CommandProcessor();
 	virtual ~CommandProcessor();
 
-	void ProcessRequest(Request *request, DisplayDriver *display);
+	void ProcessRequest(Request *request, DisplayDriver *display,
+			Configuration *configuration);
 };
 
 #endif /* COMMANDPROCESSOR_H_ */

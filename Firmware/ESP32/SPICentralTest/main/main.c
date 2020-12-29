@@ -57,7 +57,8 @@ void write_strand(spi_device_handle_t *spi, uint16_t x, uint16_t pixels,
 
 	esp_err_t ret;
 
-	ESP_LOGI("StrandTask", "Data: %d - %d - %d  %d", x, txBuffer[1], txBuffer[2], bodyBytes);
+	ESP_LOGI("StrandTask", "Data: %d - %d - %d  %d", x, txBuffer[1],
+			txBuffer[2], bodyBytes);
 
 	ret = spi_device_polling_transmit(*spi, &txTrans);
 	ESP_ERROR_CHECK(ret);
@@ -86,8 +87,99 @@ void commit_strand(spi_device_handle_t *spi) {
 	ESP_ERROR_CHECK(ret);
 }
 
+typedef struct {
+	int16_t position;
+	int8_t velocity;
+	uint8_t color[4];
+} Particle;
+
+#define PARTICLES 4
+
+Particle particles[PARTICLES];
+
+void assign_strand(spi_device_handle_t *spi) {
+	spi_transaction_t txTrans = {
+
+	};
+
+	uint16_t offset = 0;
+
+	txBuffer[offset++] = 0x03;
+	txBuffer[offset++] = 0x00;
+	txBuffer[offset++] = 0x00;
+
+	for (uint16_t particleIndex = 0; particleIndex < PARTICLES;
+			particleIndex++) {
+		Particle *particle = particles + particleIndex;
+
+		for(uint8_t tail = 0; tail < 8; tail++) {
+			int16_t direction = particle->velocity > 0 ? 1 : -1;
+			int16_t position = particle->position + (tail * direction );
+
+			txBuffer[offset++] = position / 256;
+			txBuffer[offset++] = position % 256;
+			txBuffer[offset++] = 0x00;
+			txBuffer[offset++] = 0x00;
+			txBuffer[offset++] = particle->color[0];
+			txBuffer[offset++] = particle->color[1];
+			txBuffer[offset++] = particle->color[2];
+			txBuffer[offset++] = particle->color[3];
+		}
+	}
+
+	uint16_t bodyBytes = offset - 3;
+	txBuffer[1] = ((uint8_t) (bodyBytes / 256));
+	txBuffer[2] = ((uint8_t) (bodyBytes % 256));
+
+	txTrans.rx_buffer = NULL;
+	txTrans.tx_buffer = txBuffer;
+	txTrans.length = 263 * 8;
+	txTrans.rxlength = 0;
+
+	esp_err_t ret;
+
+	ret = spi_device_polling_transmit(*spi, &txTrans);
+	ESP_ERROR_CHECK(ret);
+}
+
 void strandTask(void *pvParameters) {
 	ESP_LOGI("StrandTask", "Task start");
+
+	uint8_t particleIndex = 0;
+
+	particles[particleIndex].position = 0;
+	particles[particleIndex].velocity = 2;
+	particles[particleIndex].color[0] = 255;
+	particles[particleIndex].color[1] = 0;
+	particles[particleIndex].color[2] = 0;
+	particles[particleIndex].color[3] = 0;
+
+	particleIndex++;
+
+	particles[particleIndex].position = 0;
+	particles[particleIndex].velocity = -2;
+	particles[particleIndex].color[0] = 0;
+	particles[particleIndex].color[1] = 255;
+	particles[particleIndex].color[2] = 0;
+	particles[particleIndex].color[3] = 0;
+
+	particleIndex++;
+
+	particles[particleIndex].position = 0;
+	particles[particleIndex].velocity = 1;
+	particles[particleIndex].color[0] = 0;
+	particles[particleIndex].color[1] = 0;
+	particles[particleIndex].color[2] = 255;
+	particles[particleIndex].color[3] = 0;
+
+	particleIndex++;
+
+	particles[particleIndex].position = 0;
+	particles[particleIndex].velocity = -1;
+	particles[particleIndex].color[0] = 0;
+	particles[particleIndex].color[1] = 0;
+	particles[particleIndex].color[2] = 0;
+	particles[particleIndex].color[3] = 255;
 
 	esp_err_t ret;
 
@@ -107,7 +199,7 @@ void strandTask(void *pvParameters) {
 		.quadwp_io_num = -1,
 		.quadhd_io_num = -1 };
 	spi_device_interface_config_t devcfg = {
-		.clock_speed_hz = (APB_CLK_FREQ / 15), //SPI_MASTER_FREQ_8M,
+		.clock_speed_hz = (APB_CLK_FREQ / 20), //SPI_MASTER_FREQ_8M,
 		.mode = 0,          //SPI mode 0
 		.spics_io_num = PIN_NUM_CS, //CS pin
 		.queue_size = 1,
@@ -131,70 +223,20 @@ void strandTask(void *pvParameters) {
 
 	while (1) {
 		ESP_LOGI("StrandTask", "Loop, shift %d", shift);
-#if 0
-		for (uint16_t x = 0; x < 300; x += pixels) {
 
-			for (uint16_t i = 0; i < pixels; i++) {
-				uint16_t offset = i * 4;
-
-				pixelData[offset++] = ((i + shift) % 2 == 0) ? 0xFF : 0x00;
-				pixelData[offset++] = ((i + shift) % 2 == 1) ? 0xFF : 0x00;
-				pixelData[offset++] = 0x00;
-				pixelData[offset++] = 0x00;
-
+		for (particleIndex = 0; particleIndex < PARTICLES; particleIndex++) {
+			particles[particleIndex].position +=
+					particles[particleIndex].velocity;
+			if (particles[particleIndex].position < -10) {
+				particles[particleIndex].position = 300;
+			} else if (particles[particleIndex].position > 310) {
+				particles[particleIndex].position = 0;
 			}
-
-			write_strand(&spi, x, pixels, pixelData);
-			vTaskDelay(100 / portTICK_PERIOD_MS);
-		}
-#else
-		if (shift > 310) {
-			shift = 0;
 		}
 
-		for (uint16_t sectionStart = 0; sectionStart < 300; sectionStart +=
-				pixels) {
+		assign_strand(&spi);
 
-			for (uint16_t i = 0; i < pixels; i++) {
-				uint16_t x = sectionStart + i;
-				uint16_t offset = i * 4;
-
-				int16_t redDelta = ((int16_t) shift) - x;
-
-				int16_t greenDelta = ((int16_t) 300 - shift) - x;
-
-//				pixelData[offset++] = 0x55;
-//				pixelData[offset++] = 0xAA;
-//				pixelData[offset++] = 0x55;
-//				pixelData[offset++] = 0x00;
-
-				if (redDelta < 6 && redDelta >= 0) {
-					pixelData[offset++] = (6 - redDelta) * 10;
-				} else {
-					pixelData[offset++] = 0x00;
-				}
-				if (greenDelta <= 0 && greenDelta > -6) {
-					pixelData[offset++] = (greenDelta + 6) * 10;
-				} else {
-					pixelData[offset++] = 0x00;
-				}
-//				if (x == shift) {
-//					pixelData[offset++] = 0xFF;
-//					pixelData[offset++] = 0xFF;
-//				} else {
-//					pixelData[offset++] = 0x00;
-//					pixelData[offset++] = 0x00;
-//				}
-				pixelData[offset++] = 0x00;
-				pixelData[offset++] = 0x00;
-			}
-
-			ESP_ERROR_CHECK(gpio_set_level(4, 1));
-			write_strand(&spi, sectionStart, pixels, pixelData);
-			ESP_ERROR_CHECK(gpio_set_level(4, 0));
-			vTaskDelay(10 / portTICK_PERIOD_MS);
-		}
-#endif
+		vTaskDelay(10 / portTICK_PERIOD_MS);
 
 		ESP_ERROR_CHECK(gpio_set_level(4, 1));
 		commit_strand(&spi);

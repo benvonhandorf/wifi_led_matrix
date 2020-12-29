@@ -39,15 +39,37 @@ enum RequestType : uint8_t {
 	 */
 	SetPixelData = 0x01,
 
-			/**
-			 * Commit assigned pixel data to the display.
-			 */
-			Commit = 0x02,
+	/**
+	 * Commit assigned pixel data to the display.
+	 */
+	Commit = 0x02,
 
-			/***
-			 * Reconfigure the output device with the supplied data.
-			 */
-			Configure = 0x80
+	/**
+	 * Clear all pixel data and assign the specified values to the designated positions.
+	 * Pixel data: 8 bytes per pixel specified
+	 *
+	 * Total length minus 7 must be evenly divisible by 8.
+	 *
+	 * Frame Data:
+	 * [uint16_t x, uint16_t y uint8_t r uint8_t g uint8_t b uint8_t w] Position and RGBW data for each pixel
+	 */
+	ClearAssignPixelData = 0x03,
+
+	/**
+	 * Assign the specified values to the designated positions.
+	 * Pixel data: 8 bytes per pixel specified
+	 *
+	 * Total length minus 7 must be evenly divisible by 8.
+	 *
+	 * Frame Data:
+	 * [uint16_t x, uint16_t y uint8_t r uint8_t g uint8_t b uint8_t w] Position and RGBW data for each pixel
+	 */
+	AssignPixelData = 0x04,
+
+	/***
+	 * Reconfigure the output device with the supplied data.
+	 */
+	Configure = 0x80
 };
 
 #endif /* PROTOCOL_H_ */
