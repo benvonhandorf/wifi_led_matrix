@@ -113,17 +113,19 @@ void assign_strand(spi_device_handle_t *spi) {
 		Particle *particle = particles + particleIndex;
 
 		for(uint8_t tail = 0; tail < 8; tail++) {
-			int16_t direction = particle->velocity > 0 ? 1 : -1;
+			int16_t direction = particle->velocity > 0 ? -1 : 1;
 			int16_t position = particle->position + (tail * direction );
 
-			txBuffer[offset++] = position / 256;
-			txBuffer[offset++] = position % 256;
-			txBuffer[offset++] = 0x00;
-			txBuffer[offset++] = 0x00;
-			txBuffer[offset++] = particle->color[0];
-			txBuffer[offset++] = particle->color[1];
-			txBuffer[offset++] = particle->color[2];
-			txBuffer[offset++] = particle->color[3];
+			if(position > 0 && position < 300) {
+				txBuffer[offset++] = position / 256;
+				txBuffer[offset++] = position % 256;
+				txBuffer[offset++] = 0x00;
+				txBuffer[offset++] = 0x00;
+				txBuffer[offset++] = particle->color[0] / (tail + 1);
+				txBuffer[offset++] = particle->color[1] / (tail + 1);
+				txBuffer[offset++] = particle->color[2] / (tail + 1);
+				txBuffer[offset++] = particle->color[3] / (tail + 1);
+			}
 		}
 	}
 
@@ -146,40 +148,41 @@ void strandTask(void *pvParameters) {
 	ESP_LOGI("StrandTask", "Task start");
 
 	uint8_t particleIndex = 0;
+	uint32_t velocityRandom;
 
 	particles[particleIndex].position = 0;
-	particles[particleIndex].velocity = 2;
-	particles[particleIndex].color[0] = 255;
-	particles[particleIndex].color[1] = 0;
-	particles[particleIndex].color[2] = 0;
-	particles[particleIndex].color[3] = 0;
+	velocityRandom = esp_random();
+	particles[particleIndex].velocity = ((int8_t) velocityRandom & 0x7) * (velocityRandom & 0x80 ? -1 : 1) ;
+	particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : 1;
+	esp_fill_random(particles[particleIndex].color, 4);
+	particles[particleIndex].color[3] /= 8;
 
 	particleIndex++;
 
 	particles[particleIndex].position = 0;
-	particles[particleIndex].velocity = -2;
-	particles[particleIndex].color[0] = 0;
-	particles[particleIndex].color[1] = 255;
-	particles[particleIndex].color[2] = 0;
-	particles[particleIndex].color[3] = 0;
+	velocityRandom = esp_random();
+	particles[particleIndex].velocity = ((int8_t) velocityRandom & 0x7) * (velocityRandom & 0x80 ? -1 : 1) ;
+	particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : 1;
+	esp_fill_random(particles[particleIndex].color, 4);
+	particles[particleIndex].color[3] /= 8;
 
 	particleIndex++;
 
 	particles[particleIndex].position = 0;
-	particles[particleIndex].velocity = 1;
-	particles[particleIndex].color[0] = 0;
-	particles[particleIndex].color[1] = 0;
-	particles[particleIndex].color[2] = 255;
-	particles[particleIndex].color[3] = 0;
+	velocityRandom = esp_random();
+	particles[particleIndex].velocity = ((int8_t) velocityRandom & 0x7) * (velocityRandom & 0x80 ? -1 : 1) ;
+	particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : 1;
+	esp_fill_random(particles[particleIndex].color, 4);
+	particles[particleIndex].color[3] /= 8;
 
 	particleIndex++;
 
 	particles[particleIndex].position = 0;
-	particles[particleIndex].velocity = -1;
-	particles[particleIndex].color[0] = 0;
-	particles[particleIndex].color[1] = 0;
-	particles[particleIndex].color[2] = 0;
-	particles[particleIndex].color[3] = 255;
+	velocityRandom = esp_random();
+	particles[particleIndex].velocity = ((int8_t) velocityRandom & 0x7) * (velocityRandom & 0x80 ? -1 : 1) ;
+	particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : 1;
+	esp_fill_random(particles[particleIndex].color, 4);
+	particles[particleIndex].color[3] /= 8;
 
 	esp_err_t ret;
 
@@ -228,15 +231,35 @@ void strandTask(void *pvParameters) {
 			particles[particleIndex].position +=
 					particles[particleIndex].velocity;
 			if (particles[particleIndex].position < -10) {
+				velocityRandom = esp_random();
+				if((velocityRandom & 0x3) == 0x3) {
+					particles[particleIndex].velocity -= 1;
+					particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : -1;
+				} else if ((velocityRandom & 0x1) == 0x1) {
+					particles[particleIndex].velocity += 1;
+					particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : 1;
+				}
+
 				particles[particleIndex].position = 300;
+
 			} else if (particles[particleIndex].position > 310) {
+				velocityRandom = esp_random();
+				if((velocityRandom & 0x3) == 0x3) {
+					particles[particleIndex].velocity -= 1;
+					particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : -1;
+				} else if ((velocityRandom & 0x1) == 0x1) {
+					particles[particleIndex].velocity += 1;
+					particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : 1;
+				}
+
+
 				particles[particleIndex].position = 0;
 			}
 		}
 
 		assign_strand(&spi);
 
-		vTaskDelay(10 / portTICK_PERIOD_MS);
+		vTaskDelay(20 / portTICK_PERIOD_MS);
 
 		ESP_ERROR_CHECK(gpio_set_level(4, 1));
 		commit_strand(&spi);
