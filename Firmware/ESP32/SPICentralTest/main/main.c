@@ -202,7 +202,7 @@ void strandTask(void *pvParameters) {
 		.quadwp_io_num = -1,
 		.quadhd_io_num = -1 };
 	spi_device_interface_config_t devcfg = {
-		.clock_speed_hz = (APB_CLK_FREQ / 20), //SPI_MASTER_FREQ_8M,
+		.clock_speed_hz = (APB_CLK_FREQ / 20),//SPI_MASTER_FREQ_8M, //(APB_CLK_FREQ / 20),
 		.mode = 0,          //SPI mode 0
 		.spics_io_num = PIN_NUM_CS, //CS pin
 		.queue_size = 1,
@@ -232,10 +232,10 @@ void strandTask(void *pvParameters) {
 					particles[particleIndex].velocity;
 			if (particles[particleIndex].position < -10) {
 				velocityRandom = esp_random();
-				if((velocityRandom & 0x3) == 0x3) {
+				if((velocityRandom & 0x3) == 0x3 && particles[particleIndex].velocity > -10) {
 					particles[particleIndex].velocity -= 1;
 					particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : -1;
-				} else if ((velocityRandom & 0x1) == 0x1) {
+				} else if ((velocityRandom & 0x1) == 0x1 && particles[particleIndex].velocity < -0) {
 					particles[particleIndex].velocity += 1;
 					particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : 1;
 				}
@@ -244,14 +244,13 @@ void strandTask(void *pvParameters) {
 
 			} else if (particles[particleIndex].position > 310) {
 				velocityRandom = esp_random();
-				if((velocityRandom & 0x3) == 0x3) {
+				if((velocityRandom & 0x3) == 0x3 && particles[particleIndex].velocity > -10) {
 					particles[particleIndex].velocity -= 1;
 					particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : -1;
-				} else if ((velocityRandom & 0x1) == 0x1) {
+				} else if ((velocityRandom & 0x1) == 0x1 && particles[particleIndex].velocity < -0) {
 					particles[particleIndex].velocity += 1;
 					particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : 1;
 				}
-
 
 				particles[particleIndex].position = 0;
 			}

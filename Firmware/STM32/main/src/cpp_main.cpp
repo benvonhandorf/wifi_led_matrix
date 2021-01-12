@@ -157,6 +157,9 @@ void RxCpltCallback(SPI_HandleTypeDef *hspi) {
 //			commandProcessor.ProcessRequest(&request, display);
 //		}
 //	} else {
+
+//	HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_RESET);
+
 	currentBuffer->ready = true;
 	currentBuffer->inUse = false;
 	currentBuffer = NULL;
@@ -190,6 +193,8 @@ void BeginReceive() {
 	if (currentBuffer != NULL) {
 		hspi1.RxCpltCallback = RxCpltCallback;
 
+//		HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_SET);
+
 		HAL_SPI_Receive_IT(&hspi1, (uint8_t*) currentBuffer->buffer, 263); //Was 1024
 	} else {
 		//We'll miss the next SPI transaction
@@ -197,8 +202,8 @@ void BeginReceive() {
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-	if (GPIO_Pin == IPS_NCS_Pin) {
-		if (IPS_NCS_GPIO_Port->IDR & IPS_NCS_Pin) {
+	if (GPIO_Pin == SPI1_NCS_Pin) {
+		if (SPI1_NCS_GPIO_Port->IDR & SPI1_NCS_Pin) {
 //			HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_SET);
 //			HAL_SPI_Abort(&hspi1);
 //			HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_RESET);
@@ -293,23 +298,21 @@ extern "C" int cpp_main(void) {
 
 			if (receiveBuffers[i].ready && !receiveBuffers[i].inUse) {
 
-				HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_SET);
-
 				if (!request.Parse(receiveBuffers[i].buffer, 263)) {
-					uint16_t firstNonZero = 0;
-					for (int c = 0; c < 260; c++) {
-						if (request.body[c] != 0x00) {
-							firstNonZero = c;
-							break;
-						}
-					}
-
-					sprintf((char*) buffer, "UNK: %d %02x - %d fnz: %x\r\n", i,
-							duration, request.type, request.bodyLength,
-							firstNonZero);
-
-					HAL_UART_Transmit(&huart1, buffer, strlen((char*) buffer),
-							100);
+//					uint16_t firstNonZero = 0;
+//					for (int c = 0; c < 260; c++) {
+//						if (request.body[c] != 0x00) {
+//							firstNonZero = c;
+//							break;
+//						}
+//					}
+//
+//					sprintf((char*) buffer, "UNK: %d %02x - %d fnz: %x\r\n", i,
+//							duration, request.type, request.bodyLength,
+//							firstNonZero);
+//
+//					HAL_UART_Transmit(&huart1, buffer, strlen((char*) buffer),
+//							100);
 				}
 
 				receiveBuffers[i].ready = false;
@@ -322,7 +325,7 @@ extern "C" int cpp_main(void) {
 
 //				uint32_t duration = HAL_GetTick() - start;
 
-				HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_RESET);
+//				HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_RESET);
 			}
 		}
 //		HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_RESET);
@@ -357,7 +360,7 @@ extern "C" int cpp_main(void) {
 		//Panel 2: Red on row 1, Blue on row 2, looks steady
 //			pos = 65;
 
-		HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_SET);
+//		HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_SET);
 
 		for (uint16_t col = 0; col < configuration.getWidth(); col++) {
 			for (uint16_t row = 0; row < configuration.getHeight(); row++) {
@@ -381,7 +384,7 @@ extern "C" int cpp_main(void) {
 
 		commit();
 
-		HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_RESET);
+//		HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_RESET);
 #elif DRAW == 3
 
 //		HAL_Delay(5);

@@ -293,7 +293,7 @@ F 3 "" H 2500 1350 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Regulator_Linear:AP2112K-3.3 U1
+L STM32-Driver-v1-rescue:AP2112K-3.3-Regulator_Linear U1
 U 1 1 5F99E634
 P 3700 1200
 F 0 "U1" H 3700 1542 50  0000 C CNN
