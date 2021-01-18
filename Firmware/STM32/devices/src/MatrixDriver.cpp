@@ -29,7 +29,7 @@ extern TIM_HandleTypeDef htim1;
 extern DMA_HandleTypeDef hdma_tim1_ch1;
 
 uint32_t cycles = 0;
-extern char buffer[1024];
+extern char stringBuffer[1024];
 uint32_t latchTicks = 0;
 
 //void DMA_HalfComplete(DMA_HandleTypeDef *hdma) {
@@ -57,7 +57,7 @@ void DMA_Error(DMA_HandleTypeDef *hdma) {
 			hdma_tim1_ch1.ErrorCode);
 #endif
 
-	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
+	HAL_UART_Transmit(&huart1, (uint8_t*) stringBuffer, strlen(stringBuffer), 10);
 }
 
 
@@ -147,10 +147,10 @@ void MatrixDriver::Open() {
 		}
 	}
 
-	sprintf(buffer, "CFG: %ux%u Buffers: %u Planes: %u@%u \n", width, height,
+	sprintf(stringBuffer, "CFG: %ux%u Buffers: %u Planes: %u@%u \n", width, height,
 			bufferSize, planes, planeSize);
 
-	HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 10);
+	HAL_UART_Transmit(&huart1, (uint8_t*) stringBuffer, strlen(stringBuffer), 10);
 
 	hdma_tim1_ch1.XferAbortCallback = DMA_Abort;
 	hdma_tim1_ch1.XferCpltCallback = DMA_Complete;
@@ -265,12 +265,12 @@ void MatrixDriver::Dump() {
 
 		if (r0 != 0) {
 
-			sprintf(buffer,
+			sprintf(stringBuffer,
 					"%04u : %04x - %x %x %x - %x %x %x @ %x %x %x %x - %d - %u - %u - %u\n",
 					offset, val, r0, g0, b0, r1, g1, b1, a, b, c, d, rowVal,
 					lat, oe, clk);
 
-			HAL_UART_Transmit(&huart1, (uint8_t*) buffer, strlen(buffer), 50);
+			HAL_UART_Transmit(&huart1, (uint8_t*) stringBuffer, strlen(stringBuffer), 50);
 		}
 
 	}

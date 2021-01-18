@@ -17,7 +17,7 @@ CommandProcessor::~CommandProcessor() {
 }
 
 void CommandProcessor::ProcessRequest(Request *request, DisplayDriver *display,
-		Configuration *configuration) {
+		Configuration *configuration, PixelMapping *pixelMapping) {
 	switch (request->type) {
 	case RequestType::SetPixelData: {
 		uint16_t x = request->body[0] << 8 | request->body[1];
@@ -31,7 +31,9 @@ void CommandProcessor::ProcessRequest(Request *request, DisplayDriver *display,
 			uint8_t b = request->body[pixelStart + 2];
 			uint8_t w = request->body[pixelStart + 3];
 
-			display->SetPixel(x, y, r, g, b, w);
+			PixelMapping::Pixel physicalPixel = pixelMapping->mapVirtualPixelToPhysicalPixel(PixelMapping::Pixel(x, y));
+
+			display->SetPixel(physicalPixel.x, physicalPixel.y, r, g, b, w);
 
 			pixelStart += 4;
 			x++;
@@ -43,7 +45,9 @@ void CommandProcessor::ProcessRequest(Request *request, DisplayDriver *display,
 	case RequestType::ClearAssignPixelData: {
 		for (uint16_t x = 0; x < configuration->getWidth(); x++) {
 			for (uint16_t y = 0; y < configuration->getHeight(); y++) {
-				display->SetPixel(x, y, 0, 0, 0, 0);
+				PixelMapping::Pixel physicalPixel = pixelMapping->mapVirtualPixelToPhysicalPixel(PixelMapping::Pixel(x, y));
+
+				display->SetPixel(physicalPixel.x, physicalPixel.y, 0, 0, 0, 0);
 			}
 		}
 		//No break.  Proceed to assign pixel data
@@ -61,7 +65,9 @@ void CommandProcessor::ProcessRequest(Request *request, DisplayDriver *display,
 			uint8_t b = request->body[offset + 6];
 			uint8_t w = request->body[offset + 7];
 
-			display->SetPixel(x, y, r, g, b, w);
+			PixelMapping::Pixel physicalPixel = pixelMapping->mapVirtualPixelToPhysicalPixel(PixelMapping::Pixel(x, y));
+
+			display->SetPixel(physicalPixel.x, physicalPixel.y, r, g, b, w);
 		}
 
 		break;

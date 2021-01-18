@@ -25,9 +25,22 @@ public:
 
 class SimplePixelMapping : public PixelMapping {
 public:
+	SimplePixelMapping(uint8_t panelCount, uint16_t panelWidth, uint16_t panelHeight) {
+		this->panelCount = panelCount;
+		this->panelWidth = panelWidth;
+		this->panelHeight = panelHeight;
+	}
+
 	Pixel	mapVirtualPixelToPhysicalPixel(Pixel input) {
+		input.y += input.x / panelWidth;
+		input.x = input.x % panelWidth;
+
 		return input;
 	}
+private:
+	uint8_t	panelCount;
+	uint16_t panelWidth;
+	uint16_t panelHeight;
 };
 
 class LeftToRightPixelMapping : public PixelMapping {
@@ -39,6 +52,9 @@ public:
 	}
 
 	Pixel	mapVirtualPixelToPhysicalPixel(Pixel input) {
+		input.y += input.x / panelWidth;
+		input.x = input.x % panelWidth;
+
 		//Panel counted from top-left
 		uint16_t panel = input.y / panelHeight;
 		uint16_t lineOnPanel = input.y % panelHeight;
@@ -73,6 +89,9 @@ public:
 
 	Pixel	mapVirtualPixelToPhysicalPixel(Pixel input) {
 		//Panel counted from top-left
+		input.y += input.x / panelWidth;
+		input.x = input.x % panelWidth;
+
 		uint16_t panel = input.y / panelHeight;
 		uint16_t lineOnPanel = input.y % panelHeight;
 

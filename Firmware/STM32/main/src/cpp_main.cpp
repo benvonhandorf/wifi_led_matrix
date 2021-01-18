@@ -25,7 +25,7 @@ extern UART_HandleTypeDef huart1;
 #define PANEL_WIDTH 64
 #define PANEL_HEIGHT 32
 
-uint8_t buffer[1024];
+uint8_t stringBuffer[1024];
 
 uint32_t lastUpdate = 0;
 
@@ -35,8 +35,8 @@ Configuration configuration;
 PixelMapping *pixelMapping = NULL;
 
 void readConfiguration() {
-	configuration.useMatrix = false;
-	configuration.useStrands = true;
+	configuration.useMatrix = true;
+	configuration.useStrands = false;
 
 	if (configuration.useMatrix) {
 		configuration.matrixFormat = MatrixDriver::SCAN_16;
@@ -50,8 +50,8 @@ void readConfiguration() {
 		configuration.elementCount = 1;
 	}
 
-//	configuration.pixelConfiguration =
-//			Configuration::PixelConfiguration::SnakeStartBottomRight;
+	configuration.pixelConfiguration =
+			Configuration::PixelConfiguration::SnakeStartBottomRight;
 }
 
 void configure() {
@@ -78,7 +78,8 @@ void configure() {
 				configuration.elementHeight);
 		break;
 	default:
-		pixelMapping = new SimplePixelMapping();
+		pixelMapping = new SimplePixelMapping(configuration.elementCount,
+				configuration.elementWidth, configuration.elementHeight);
 		break;
 	}
 }
@@ -128,85 +129,72 @@ struct RxBuffer {
 	uint8_t buffer[1024];
 };
 
-#define RX_BUFFERS 3
+#define RX_BUFFERS 2
 RxBuffer receiveBuffers[RX_BUFFERS];
 volatile RxBuffer *currentBuffer = NULL;
 
+#define STATE_GPIO_Port LED_CLK_GPIO_Port
+#define STATE_Pin LED_1_Pin
+
 //uint8_t state = 0;
 
-void RxCpltCallback(SPI_HandleTypeDef *hspi) {
-//	if (state == 0) {
-//		sprintf((char *)buffer, "RX: %d - %01x %02x\n", hspi1.RxXferCount,
-//				spi_buffer[0], spi_buffer[1]);
-//
-//		HAL_UART_Transmit(&huart1, buffer, strlen((char *)buffer), 2000);
-//
-//		if (spi_buffer[1] != 0) {
-//			state = 1;
-//
-//			HAL_SPI_Receive_IT(&hspi1, spi_buffer + 2, spi_buffer[1]);
-//		} else {
-//			request.type = spi_buffer[0];
-//			request.bodyLength = spi_buffer[1];
-//			request.Parse(spi_buffer, spi_buffer[1] + 2);
-//
-//			state = 0;
-//
-//			HAL_SPI_Receive_IT(&hspi1, spi_buffer, 2);
-//
-//			commandProcessor.ProcessRequest(&request, display);
-//		}
-//	} else {
-
-//	HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_RESET);
-
+void DmaTransactionComplete(DMA_HandleTypeDef *hdma) {
 	currentBuffer->ready = true;
 	currentBuffer->inUse = false;
-	currentBuffer = NULL;
-//	}
+	currentBuffer =
+			(hdma_spi1_rx.Instance->CR & DMA_SxCR_CT_Msk) ?
+					&receiveBuffers[1] : &receiveBuffers[0];
+	currentBuffer->inUse = true;
+}
+
+void DmaErrors(DMA_HandleTypeDef *hdma) {
+	sprintf((char*) stringBuffer, "DMA Error %x\n", hdma->ErrorCode);
+
+	HAL_UART_Transmit(&huart1, stringBuffer, strlen((char*) stringBuffer),
+			2000);
 }
 
 void HAL_SPI_Error(SPI_HandleTypeDef *hspi) {
-	sprintf((char*) buffer, "ERROR\n");
+	sprintf((char*) stringBuffer, "ERROR\n");
 
-	HAL_UART_Transmit(&huart1, buffer, strlen((char*) buffer), 2000);
+	HAL_UART_Transmit(&huart1, stringBuffer, strlen((char*) stringBuffer),
+			2000);
 }
 
 void BeginReceive() {
-	__disable_irq();
+	hdma_spi1_rx.XferCpltCallback = DmaTransactionComplete;
+	hdma_spi1_rx.XferM1CpltCallback = DmaTransactionComplete;
+	hdma_spi1_rx.XferErrorCallback = DmaErrors;
 
-	if (currentBuffer != NULL) {
-		currentBuffer->inUse = false;
-		currentBuffer = NULL;
+	HAL_StatusTypeDef result;
+
+	currentBuffer =
+			(hdma_spi1_rx.Instance->CR & DMA_SxCR_CT_Msk) ?
+					&receiveBuffers[1] : &receiveBuffers[0];
+	currentBuffer->ready = false;
+	currentBuffer->inUse = true;
+
+	result = HAL_DMAEx_MultiBufferStart_IT(&hdma_spi1_rx,
+			(uint32_t) &hspi1.Instance->DR, (uint32_t) receiveBuffers[0].buffer,
+			(uint32_t) receiveBuffers[1].buffer, 263);
+
+	if (result != HAL_OK) {
+		sprintf((char*) stringBuffer, "DMA Start Failure: %lu\n", result);
+
+		HAL_UART_Transmit(&huart1, stringBuffer, strlen((char*) stringBuffer),
+				500);
 	}
 
-	for (int i = 0; i < RX_BUFFERS; i++) {
-		if (!receiveBuffers[i].ready && !currentBuffer->inUse) {
-			currentBuffer = &(receiveBuffers[i]);
-			currentBuffer->inUse = true;
-			break;
-		}
-	}
+	__HAL_SPI_ENABLE(&hspi1);
+	__HAL_SPI_ENABLE_IT(&hspi1, (SPI_IT_ERR));
 
-	__enable_irq();
-
-	if (currentBuffer != NULL) {
-		hspi1.RxCpltCallback = RxCpltCallback;
-
-//		HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_SET);
-
-		HAL_SPI_Receive_IT(&hspi1, (uint8_t*) currentBuffer->buffer, 263); //Was 1024
-	} else {
-		//We'll miss the next SPI transaction
-	}
+	/* Enable Rx DMA Request */
+	SET_BIT((&hspi1)->Instance->CR2, SPI_CR2_RXDMAEN);
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == SPI1_NCS_Pin) {
 		if (SPI1_NCS_GPIO_Port->IDR & SPI1_NCS_Pin) {
-//			HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_SET);
-//			HAL_SPI_Abort(&hspi1);
-//			HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_RESET);
 			HAL_NVIC_DisableIRQ(EXTI4_IRQn);
 			BeginReceive();
 		}
@@ -286,9 +274,9 @@ extern "C" int cpp_main(void) {
 
 	uint32_t duration = HAL_GetTick() - start;
 
-	sprintf((char*) buffer, "Setup Duration: %lu\n", duration);
+	sprintf((char*) stringBuffer, "Setup Duration: %lu\n", duration);
 
-	HAL_UART_Transmit(&huart1, buffer, strlen((char*) buffer), 500);
+	HAL_UART_Transmit(&huart1, stringBuffer, strlen((char*) stringBuffer), 500);
 
 	while (1) {
 #ifndef DRAW
@@ -297,6 +285,10 @@ extern "C" int cpp_main(void) {
 //			start = HAL_GetTick();
 
 			if (receiveBuffers[i].ready && !receiveBuffers[i].inUse) {
+
+#ifdef STATE_GPIO_Port
+				HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_SET);
+#endif
 
 				if (!request.Parse(receiveBuffers[i].buffer, 263)) {
 //					uint16_t firstNonZero = 0;
@@ -317,22 +309,14 @@ extern "C" int cpp_main(void) {
 
 				receiveBuffers[i].ready = false;
 
-				if (currentBuffer == NULL) {
-					BeginReceive();
-				}
+				commandProcessor.ProcessRequest(&request, display,
+						&configuration, pixelMapping);
 
-				commandProcessor.ProcessRequest(&request, display, &configuration);
-
-//				uint32_t duration = HAL_GetTick() - start;
-
-//				HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_RESET);
+#ifdef STATE_GPIO_Port
+				HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_RESET);
+#endif
 			}
 		}
-//		HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_RESET);
-
-//		HAL_IWDG_Refresh(&hiwdg);
-
-//		HAL_Delay(5);
 
 #elif DRAW == 1
 	for (uint16_t col = 0; col < configuration.getWidth(); col++) {

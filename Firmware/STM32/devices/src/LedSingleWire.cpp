@@ -93,7 +93,8 @@ void LedSingleWire::SetPixel(uint16_t pixel, uint16_t strand, uint8_t r,
 
 	switch (strand) {
 	case 0:
-		strandMask = LED_0_Pin;
+		//Debugging - Mirror data onto LED 1
+		strandMask = LED_0_Pin ;//| LED_1_Pin;
 		break;
 	default:
 		//Strand is not configured

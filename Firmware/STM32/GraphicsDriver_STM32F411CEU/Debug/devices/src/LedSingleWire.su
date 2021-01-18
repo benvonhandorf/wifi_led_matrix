@@ -4,6 +4,6 @@ LedSingleWire.cpp:27:1:LedSingleWire::LedSingleWire(LedSingleWire::Format, uint8
 LedSingleWire.cpp:48:6:virtual void LedSingleWire::Open()	48	static
 LedSingleWire.cpp:80:6:virtual void LedSingleWire::Close()	16	static
 LedSingleWire.cpp:84:6:virtual void LedSingleWire::SetPixel(uint16_t, uint16_t, uint8_t, uint8_t, uint8_t, uint8_t)	40	static
-LedSingleWire.cpp:131:6:virtual void LedSingleWire::SwapBuffer()	16	static
-LedSingleWire.cpp:135:6:void LedSingleWire::SendStands()	16	static
-LedSingleWire.cpp:143:6:void LedSingleWire::StartNextDma()	16	static
+LedSingleWire.cpp:132:6:virtual void LedSingleWire::SwapBuffer()	16	static
+LedSingleWire.cpp:136:6:void LedSingleWire::SendStands()	16	static
+LedSingleWire.cpp:144:6:void LedSingleWire::StartNextDma()	16	static

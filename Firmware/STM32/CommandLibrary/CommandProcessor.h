@@ -11,6 +11,7 @@
 #include "DisplayDriver.h"
 #include "Request.h"
 #include "configuration.h"
+#include "PixelMapping.h"
 
 class CommandProcessor {
 public:
@@ -18,7 +19,7 @@ public:
 	virtual ~CommandProcessor();
 
 	void ProcessRequest(Request *request, DisplayDriver *display,
-			Configuration *configuration);
+			Configuration *configuration, PixelMapping *pixelMapping);
 };
 
 #endif /* COMMANDPROCESSOR_H_ */

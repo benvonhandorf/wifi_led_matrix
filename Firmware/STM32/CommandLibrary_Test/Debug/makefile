@@ -40,10 +40,10 @@ endif
 all: CommandLibrary_Test
 
 dependents:
-	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/CommandLibrary/Debug_ARM && $(MAKE) clean all
-	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Debug_ARM && $(MAKE) clean all
-	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/Debug_ARM && $(MAKE) clean all
-	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/NetworkLibrary/Debug_ARM && $(MAKE) clean all
+	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/CommandLibrary/Debug_ARM && $(MAKE) all
+	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Debug_ARM && $(MAKE) all
+	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/Debug_ARM && $(MAKE) all
+	-cd /home/benvh/projects/wifi_led_matrix/Firmware/STM32/NetworkLibrary/Debug_ARM && $(MAKE) all
 
 # Tool invocations
 CommandLibrary_Test: $(OBJS) $(USER_OBJS) /home/benvh/projects/wifi_led_matrix/Firmware/STM32/CommandLibrary/Debug_ARM/libCommandLibrary.a /home/benvh/projects/wifi_led_matrix/Firmware/STM32/Common/Debug_ARM/libCommon.a /home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/Debug_ARM/libDisplayDriverCommon.a /home/benvh/projects/wifi_led_matrix/Firmware/STM32/NetworkLibrary/Debug_ARM/libNetworkLibrary.a

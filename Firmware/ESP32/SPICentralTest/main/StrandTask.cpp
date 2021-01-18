@@ -1,24 +1,26 @@
+/*
+ * StrandTask.cpp
+ *
+ *  Created on: Jan 17, 2021
+ *      Author: benvh
+ */
+
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "esp_system.h"
 #include "esp_event.h"
-#include "esp_event_loop.h"
 #include "nvs_flash.h"
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
 
-esp_err_t event_handler(void *ctx, system_event_t *event) {
-	return ESP_OK;
-}
+#include "TaskParameters.h"
 
-#define PIN_NUM_MISO 19
-#define PIN_NUM_MOSI 23
-#define PIN_NUM_CLK  18
-#define PIN_NUM_CS   5
+#include "StrandTask.h"
 
-uint8_t txBuffer[1024];
-uint8_t rxBuffer[1024];
+extern uint8_t txBuffer[1024];
+extern uint8_t rxBuffer[1024];
+#define MESSAGE_BODY_BYTES 260
 
 void write_strand(spi_device_handle_t *spi, uint16_t x, uint16_t pixels,
 		uint8_t *values) {
@@ -52,7 +54,7 @@ void write_strand(spi_device_handle_t *spi, uint16_t x, uint16_t pixels,
 
 	txTrans.rx_buffer = NULL;
 	txTrans.tx_buffer = txBuffer;
-	txTrans.length = 263 * 8;
+	txTrans.length = (MESSAGE_BODY_BYTES + 3) * 8;
 	txTrans.rxlength = 0;
 
 	esp_err_t ret;
@@ -76,7 +78,7 @@ void commit_strand(spi_device_handle_t *spi) {
 
 	txTrans.tx_buffer = txBuffer;
 	txTrans.rx_buffer = NULL;
-	txTrans.length = 263 * 8;
+	txTrans.length = (MESSAGE_BODY_BYTES + 3) * 8;
 	txTrans.rxlength = 0;
 
 	esp_err_t ret;
@@ -112,11 +114,11 @@ void assign_strand(spi_device_handle_t *spi) {
 			particleIndex++) {
 		Particle *particle = particles + particleIndex;
 
-		for(uint8_t tail = 0; tail < 8; tail++) {
+		for (uint8_t tail = 0; tail < 8; tail++) {
 			int16_t direction = particle->velocity > 0 ? -1 : 1;
-			int16_t position = particle->position + (tail * direction );
+			int16_t position = particle->position + (tail * direction);
 
-			if(position > 0 && position < 300) {
+			if (position > 0 && position < 300) {
 				txBuffer[offset++] = position / 256;
 				txBuffer[offset++] = position % 256;
 				txBuffer[offset++] = 0x00;
@@ -144,16 +146,21 @@ void assign_strand(spi_device_handle_t *spi) {
 	ESP_ERROR_CHECK(ret);
 }
 
-void strandTask(void *pvParameters) {
+ void strandTask(void *pvParameters){
 	ESP_LOGI("StrandTask", "Task start");
+
+	struct TaskParameters *taskParameters = (TaskParameters *)pvParameters;
 
 	uint8_t particleIndex = 0;
 	uint32_t velocityRandom;
 
 	particles[particleIndex].position = 0;
 	velocityRandom = esp_random();
-	particles[particleIndex].velocity = ((int8_t) velocityRandom & 0x7) * (velocityRandom & 0x80 ? -1 : 1) ;
-	particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : 1;
+	particles[particleIndex].velocity = ((int8_t) velocityRandom & 0x7)
+			* (velocityRandom & 0x80 ? -1 : 1);
+	particles[particleIndex].velocity =
+			particles[particleIndex].velocity ?
+					particles[particleIndex].velocity : 1;
 	esp_fill_random(particles[particleIndex].color, 4);
 	particles[particleIndex].color[3] /= 8;
 
@@ -161,8 +168,11 @@ void strandTask(void *pvParameters) {
 
 	particles[particleIndex].position = 0;
 	velocityRandom = esp_random();
-	particles[particleIndex].velocity = ((int8_t) velocityRandom & 0x7) * (velocityRandom & 0x80 ? -1 : 1) ;
-	particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : 1;
+	particles[particleIndex].velocity = ((int8_t) velocityRandom & 0x7)
+			* (velocityRandom & 0x80 ? -1 : 1);
+	particles[particleIndex].velocity =
+			particles[particleIndex].velocity ?
+					particles[particleIndex].velocity : 1;
 	esp_fill_random(particles[particleIndex].color, 4);
 	particles[particleIndex].color[3] /= 8;
 
@@ -170,8 +180,11 @@ void strandTask(void *pvParameters) {
 
 	particles[particleIndex].position = 0;
 	velocityRandom = esp_random();
-	particles[particleIndex].velocity = ((int8_t) velocityRandom & 0x7) * (velocityRandom & 0x80 ? -1 : 1) ;
-	particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : 1;
+	particles[particleIndex].velocity = ((int8_t) velocityRandom & 0x7)
+			* (velocityRandom & 0x80 ? -1 : 1);
+	particles[particleIndex].velocity =
+			particles[particleIndex].velocity ?
+					particles[particleIndex].velocity : 1;
 	esp_fill_random(particles[particleIndex].color, 4);
 	particles[particleIndex].color[3] /= 8;
 
@@ -179,8 +192,11 @@ void strandTask(void *pvParameters) {
 
 	particles[particleIndex].position = 0;
 	velocityRandom = esp_random();
-	particles[particleIndex].velocity = ((int8_t) velocityRandom & 0x7) * (velocityRandom & 0x80 ? -1 : 1) ;
-	particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : 1;
+	particles[particleIndex].velocity = ((int8_t) velocityRandom & 0x7)
+			* (velocityRandom & 0x80 ? -1 : 1);
+	particles[particleIndex].velocity =
+			particles[particleIndex].velocity ?
+					particles[particleIndex].velocity : 1;
 	esp_fill_random(particles[particleIndex].color, 4);
 	particles[particleIndex].color[3] /= 8;
 
@@ -191,38 +207,10 @@ void strandTask(void *pvParameters) {
 		.mode = GPIO_MODE_OUTPUT };
 
 	ESP_ERROR_CHECK(gpio_config(&gpio_conf));
-	ESP_ERROR_CHECK(gpio_set_level(4, 0));
-
-	spi_device_handle_t spi;
-	spi_bus_config_t buscfg = {
-		.miso_io_num = PIN_NUM_MISO,
-		.mosi_io_num =
-		PIN_NUM_MOSI,
-		.sclk_io_num = PIN_NUM_CLK,
-		.quadwp_io_num = -1,
-		.quadhd_io_num = -1 };
-	spi_device_interface_config_t devcfg = {
-		.clock_speed_hz = (APB_CLK_FREQ / 20),//SPI_MASTER_FREQ_8M, //(APB_CLK_FREQ / 20),
-		.mode = 0,          //SPI mode 0
-		.spics_io_num = PIN_NUM_CS, //CS pin
-		.queue_size = 1,
-		.command_bits = 0,
-		.address_bits = 0,
-		.dummy_bits = 0 };
-
-	spi_transaction_t txTrans = {
-
-	};
-	//Initialize the SPI bus
-	ret = spi_bus_initialize(SPI3_HOST, &buscfg, 2);
-	ESP_ERROR_CHECK(ret);
-	//Attach the LCD to the SPI bus
-	ret = spi_bus_add_device(SPI3_HOST, &devcfg, &spi);
-	ESP_ERROR_CHECK(ret);
+	ESP_ERROR_CHECK(gpio_set_level(GPIO_NUM_4, 0));
 
 	uint16_t shift = 0;
 	uint16_t pixels = 64;
-	uint8_t pixelData[4 * pixels];
 
 	while (1) {
 		ESP_LOGI("StrandTask", "Loop, shift %d", shift);
@@ -232,75 +220,64 @@ void strandTask(void *pvParameters) {
 					particles[particleIndex].velocity;
 			if (particles[particleIndex].position < -10) {
 				velocityRandom = esp_random();
-				if((velocityRandom & 0x3) == 0x3 && particles[particleIndex].velocity > -10) {
+				if ((velocityRandom & 0x3) == 0x3
+						&& particles[particleIndex].velocity > -10) {
 					particles[particleIndex].velocity -= 1;
-					particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : -1;
-				} else if ((velocityRandom & 0x1) == 0x1 && particles[particleIndex].velocity < -0) {
+					particles[particleIndex].velocity =
+							particles[particleIndex].velocity ?
+									particles[particleIndex].velocity : -1;
+				} else if ((velocityRandom & 0x1) == 0x1
+						&& particles[particleIndex].velocity < -0) {
 					particles[particleIndex].velocity += 1;
-					particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : 1;
+					particles[particleIndex].velocity =
+							particles[particleIndex].velocity ?
+									particles[particleIndex].velocity : 1;
 				}
 
 				particles[particleIndex].position = 300;
 
 			} else if (particles[particleIndex].position > 310) {
 				velocityRandom = esp_random();
-				if((velocityRandom & 0x3) == 0x3 && particles[particleIndex].velocity > -10) {
+				if ((velocityRandom & 0x3) == 0x3
+						&& particles[particleIndex].velocity > -10) {
 					particles[particleIndex].velocity -= 1;
-					particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : -1;
-				} else if ((velocityRandom & 0x1) == 0x1 && particles[particleIndex].velocity < -0) {
+					particles[particleIndex].velocity =
+							particles[particleIndex].velocity ?
+									particles[particleIndex].velocity : -1;
+				} else if ((velocityRandom & 0x1) == 0x1
+						&& particles[particleIndex].velocity < -0) {
 					particles[particleIndex].velocity += 1;
-					particles[particleIndex].velocity = particles[particleIndex].velocity ? particles[particleIndex].velocity : 1;
+					particles[particleIndex].velocity =
+							particles[particleIndex].velocity ?
+									particles[particleIndex].velocity : 1;
 				}
 
 				particles[particleIndex].position = 0;
 			}
 		}
 
-		assign_strand(&spi);
+		ESP_ERROR_CHECK(gpio_set_level(GPIO_NUM_4, 1));
+		assign_strand(&taskParameters->spiDevice);
+		ESP_ERROR_CHECK(gpio_set_level(GPIO_NUM_4, 0));
 
-		vTaskDelay(20 / portTICK_PERIOD_MS);
+		vTaskDelay(1 / portTICK_PERIOD_MS);
 
-		ESP_ERROR_CHECK(gpio_set_level(4, 1));
-		commit_strand(&spi);
-		ESP_ERROR_CHECK(gpio_set_level(4, 0));
+		ESP_ERROR_CHECK(gpio_set_level(GPIO_NUM_4, 1));
+		commit_strand(&taskParameters->spiDevice);
+		ESP_ERROR_CHECK(gpio_set_level(GPIO_NUM_4, 0));
 
-		vTaskDelay(20 / portTICK_PERIOD_MS);
+		vTaskDelay(1 / portTICK_PERIOD_MS);
 
 		shift++;
 	}
 }
 
-void app_main(void) {
-	nvs_flash_init();
-	tcpip_adapter_init();
-	ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
-	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT()
-	;
-	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-	wifi_config_t sta_config = {
-		.sta = {
-			.ssid = CONFIG_ESP_WIFI_SSID,
-			.password = CONFIG_ESP_WIFI_PASSWORD,
-			.bssid_set = false } };
-	ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_config));
-	ESP_ERROR_CHECK(esp_wifi_start());
-	ESP_ERROR_CHECK(esp_wifi_connect());
+StrandTask::StrandTask() {
+	// TODO Auto-generated constructor stub
 
-	ESP_LOGI("main", "Before task creation");
+}
 
-	xTaskHandle taskHandle;
-
-	xTaskCreatePinnedToCore(strandTask, "StrandTask", 10000, NULL,
-	tskIDLE_PRIORITY + 10, &taskHandle, 1);
-
-	ESP_LOGI("main", "Before scheduler start");
-
-	while (1) {
-		vTaskDelay(5000 / portTICK_PERIOD_MS);
-	}
-
-	ESP_LOGI("main", "After scheduler start");
+StrandTask::~StrandTask() {
+	// TODO Auto-generated destructor stub
 }
 
