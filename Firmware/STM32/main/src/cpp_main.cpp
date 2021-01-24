@@ -29,14 +29,16 @@ uint8_t stringBuffer[1024];
 
 uint32_t lastUpdate = 0;
 
+MatrixDriver matrixDisplay;
+LedSingleWire ledSingleWireDisplay;
 DisplayDriver *display = NULL;
 
 Configuration configuration;
 PixelMapping *pixelMapping = NULL;
 
 void readConfiguration() {
-	configuration.useMatrix = true;
-	configuration.useStrands = false;
+	configuration.useMatrix = false;
+	configuration.useStrands = true;
 
 	if (configuration.useMatrix) {
 		configuration.matrixFormat = MatrixDriver::SCAN_16;
@@ -55,16 +57,21 @@ void readConfiguration() {
 }
 
 void configure() {
+	if(display != NULL) {
+		display->Close();
+		display = NULL;
+	}
+
 	if (configuration.useMatrix) {
-		display = new MatrixDriver(
-				configuration.elementWidth * configuration.elementCount,
-				configuration.elementHeight,
-				(MatrixDriver::ScanType) configuration.matrixFormat);
+		display = &matrixDisplay;
 	} else if (configuration.useStrands) {
 
-		display = new LedSingleWire(
-				(LedSingleWire::Format) configuration.strandFormat,
-				configuration.elementCount, configuration.elementWidth);
+		display = &ledSingleWireDisplay;
+	}
+
+	if(pixelMapping != NULL) {
+		delete pixelMapping;
+		pixelMapping = NULL;
 	}
 
 	switch (configuration.pixelConfiguration) {
@@ -86,7 +93,7 @@ void configure() {
 
 void open() {
 	if (display != NULL) {
-		display->Open();
+		display->Open(&configuration);
 	}
 
 	configuration.status = Configuration::Status::Ready;
@@ -120,21 +127,38 @@ CommandProcessor commandProcessor;
 
 struct RxBuffer {
 	RxBuffer() {
-		for (int c = 0; c < 1021; c++) {
+		for (int c = 0; c < NETWORK_PACKET_SIZE; c++) {
 			buffer[c] = 0x00;
 		}
 	}
 	volatile bool inUse = false;
 	volatile bool ready = false;
-	uint8_t buffer[1024];
+	uint8_t buffer[NETWORK_PACKET_SIZE];
 };
 
 #define RX_BUFFERS 2
 RxBuffer receiveBuffers[RX_BUFFERS];
 volatile RxBuffer *currentBuffer = NULL;
 
+#define MESSAGE_BODY_BYTES 2045
+
+#define PROTOCOL_HEADER 3
+#define MESSAGE_HEADER 4
+#define BYTES_PER_PIXEL 4
+constexpr uint16_t DATA_POSITION = PROTOCOL_HEADER + MESSAGE_HEADER;
+constexpr uint16_t PIXELS_PER_MESSAGE = (MESSAGE_BODY_BYTES - MESSAGE_HEADER)
+		/ BYTES_PER_PIXEL;
+
 #define STATE_GPIO_Port LED_CLK_GPIO_Port
 #define STATE_Pin LED_1_Pin
+
+struct SystemStatus {
+	uint32_t invalidCommands = 0;
+	uint32_t commands = 0;
+	uint8_t lastInvalidCommand = 0x00;
+};
+
+SystemStatus systemStatus;
 
 //uint8_t state = 0;
 
@@ -176,7 +200,7 @@ void BeginReceive() {
 
 	result = HAL_DMAEx_MultiBufferStart_IT(&hdma_spi1_rx,
 			(uint32_t) &hspi1.Instance->DR, (uint32_t) receiveBuffers[0].buffer,
-			(uint32_t) receiveBuffers[1].buffer, 263);
+			(uint32_t) receiveBuffers[1].buffer, NETWORK_PACKET_SIZE);
 
 	if (result != HAL_OK) {
 		sprintf((char*) stringBuffer, "DMA Start Failure: %lu\n", result);
@@ -185,10 +209,11 @@ void BeginReceive() {
 				500);
 	}
 
+	//Turn on the SPI peripheral and interrupt
 	__HAL_SPI_ENABLE(&hspi1);
 	__HAL_SPI_ENABLE_IT(&hspi1, (SPI_IT_ERR));
 
-	/* Enable Rx DMA Request */
+	/* Enable RX DMA Request */
 	SET_BIT((&hspi1)->Instance->CR2, SPI_CR2_RXDMAEN);
 }
 
@@ -290,27 +315,29 @@ extern "C" int cpp_main(void) {
 				HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_SET);
 #endif
 
-				if (!request.Parse(receiveBuffers[i].buffer, 263)) {
-//					uint16_t firstNonZero = 0;
-//					for (int c = 0; c < 260; c++) {
-//						if (request.body[c] != 0x00) {
-//							firstNonZero = c;
-//							break;
-//						}
-//					}
+				if (!request.Parse(receiveBuffers[i].buffer, MESSAGE_BODY_BYTES)) {
+					systemStatus.invalidCommands++;
+					systemStatus.lastInvalidCommand = receiveBuffers[i].buffer[0];
+//					sprintf((char*) stringBuffer, "UNK: %d %02x - %d\r\n", i,
+//							request.type, request.bodyLength);
 //
-//					sprintf((char*) buffer, "UNK: %d %02x - %d fnz: %x\r\n", i,
-//							duration, request.type, request.bodyLength,
-//							firstNonZero);
-//
-//					HAL_UART_Transmit(&huart1, buffer, strlen((char*) buffer),
+//					HAL_UART_Transmit(&huart1, stringBuffer, strlen((char*) stringBuffer),
 //							100);
+				} else {
+					systemStatus.invalidCommands++;
+
+					commandProcessor.ProcessRequest(&request, display,
+							&configuration, pixelMapping);
+
+					if(request.type == RequestType::Configure) {
+						//Reconfigure the display to match the new information
+						configure();
+
+						open();
+					}
 				}
 
 				receiveBuffers[i].ready = false;
-
-				commandProcessor.ProcessRequest(&request, display,
-						&configuration, pixelMapping);
 
 #ifdef STATE_GPIO_Port
 				HAL_GPIO_WritePin(STATE_GPIO_Port, STATE_Pin, GPIO_PIN_RESET);

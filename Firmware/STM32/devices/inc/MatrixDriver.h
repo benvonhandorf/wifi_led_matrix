@@ -10,12 +10,14 @@
 
 #include <stdint.h>
 
+#include "configuration.h"
+
 class MatrixDriver : public DisplayDriver {
 public:
 	enum ScanType { SCAN_16 };
-	MatrixDriver(uint16_t width, uint16_t height, ScanType scanType);
+	MatrixDriver();
 
-	void Open();
+	void Open(Configuration *configuration);
 
 	void Close();
 

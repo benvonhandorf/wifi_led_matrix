@@ -79,10 +79,14 @@ uint16_t MatrixDriver::BufferOffset(uint16_t x, uint16_t y, uint8_t plane) {
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 
-MatrixDriver::MatrixDriver(uint16_t width, uint16_t height, ScanType scanType) {
-	this->width = width;
-	this->height = height;
-	this->scanType = scanType;
+MatrixDriver::MatrixDriver() {
+	instance = this;
+}
+
+void MatrixDriver::Open(Configuration *configuration) {
+	this->width = configuration->elementWidth * configuration->elementCount;
+	this->height = configuration->elementHeight;
+	this->scanType = (MatrixDriver::ScanType) configuration->matrixFormat;
 	this->planes = PLANES;
 
 	this->planeSize = ((width * CYCLES_PER_PIXEL) + ROW_END_CYCLES)
@@ -91,10 +95,6 @@ MatrixDriver::MatrixDriver(uint16_t width, uint16_t height, ScanType scanType) {
 
 	this->sendBufferA = true;
 
-	instance = this;
-}
-
-void MatrixDriver::Open() {
 	this->bufferA = new uint16_t[bufferSize];
 	this->bufferB = new uint16_t[bufferSize];
 

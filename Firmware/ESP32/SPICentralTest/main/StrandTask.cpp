@@ -18,9 +18,18 @@
 
 #include "StrandTask.h"
 
-extern uint8_t txBuffer[1024];
-extern uint8_t rxBuffer[1024];
-#define MESSAGE_BODY_BYTES 260
+#include "Protocol.h"
+
+#include "string.h"
+
+extern uint8_t txBufferA[2048];
+extern uint8_t txBufferB[2048];
+
+#define MESSAGE_HEADER 4
+#define BYTES_PER_PIXEL 8
+constexpr uint16_t DATA_POSITION = PROTOCOL_HEADER + MESSAGE_HEADER;
+constexpr uint16_t PIXELS_PER_MESSAGE = (MESSAGE_BODY_BYTES - MESSAGE_HEADER)
+		/ BYTES_PER_PIXEL;
 
 void write_strand(spi_device_handle_t *spi, uint16_t x, uint16_t pixels,
 		uint8_t *values) {
@@ -30,37 +39,37 @@ void write_strand(spi_device_handle_t *spi, uint16_t x, uint16_t pixels,
 
 	uint16_t offset = 0;
 
-	txBuffer[offset++] = 0x01;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
+	txBufferA[offset++] = RequestType::SetPixelData;
+	txBufferA[offset++] = 0x00;
+	txBufferA[offset++] = 0x00;
 
-	txBuffer[offset++] = x / 256;
-	txBuffer[offset++] = x % 256;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
+	txBufferA[offset++] = x / 256;
+	txBufferA[offset++] = x % 256;
+	txBufferA[offset++] = 0x00;
+	txBufferA[offset++] = 0x00;
 
 	uint16_t valueOffset = 0;
 
 	for (uint16_t i = 0; i < pixels; i++) {
-		txBuffer[offset++] = values[valueOffset++];
-		txBuffer[offset++] = values[valueOffset++];
-		txBuffer[offset++] = values[valueOffset++];
-		txBuffer[offset++] = values[valueOffset++];
+		txBufferA[offset++] = values[valueOffset++];
+		txBufferA[offset++] = values[valueOffset++];
+		txBufferA[offset++] = values[valueOffset++];
+		txBufferA[offset++] = values[valueOffset++];
 	}
 
 	uint16_t bodyBytes = offset - 3;
-	txBuffer[1] = ((uint8_t) (bodyBytes / 256));
-	txBuffer[2] = ((uint8_t) (bodyBytes % 256));
+	txBufferA[1] = ((uint8_t) (bodyBytes / 256));
+	txBufferA[2] = ((uint8_t) (bodyBytes % 256));
 
 	txTrans.rx_buffer = NULL;
-	txTrans.tx_buffer = txBuffer;
+	txTrans.tx_buffer = txBufferA;
 	txTrans.length = (MESSAGE_BODY_BYTES + 3) * 8;
 	txTrans.rxlength = 0;
 
 	esp_err_t ret;
 
-	ESP_LOGI("StrandTask", "Data: %d - %d - %d  %d", x, txBuffer[1],
-			txBuffer[2], bodyBytes);
+	ESP_LOGI("StrandTask", "Data: %d - %d - %d  %d", x, txBufferA[1],
+			txBufferA[2], bodyBytes);
 
 	ret = spi_device_polling_transmit(*spi, &txTrans);
 	ESP_ERROR_CHECK(ret);
@@ -68,17 +77,17 @@ void write_strand(spi_device_handle_t *spi, uint16_t x, uint16_t pixels,
 
 void commit_strand(spi_device_handle_t *spi) {
 	uint16_t offset = 0;
-	txBuffer[offset++] = 0x02;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
+	txBufferA[offset++] = RequestType::Commit;
+	txBufferA[offset++] = 0x00;
+	txBufferA[offset++] = 0x00;
 
 	spi_transaction_t txTrans = {
 
 	};
 
-	txTrans.tx_buffer = txBuffer;
+	txTrans.tx_buffer = txBufferA;
 	txTrans.rx_buffer = NULL;
-	txTrans.length = (MESSAGE_BODY_BYTES + 3) * 8;
+	txTrans.length = NETWORK_PACKET_SIZE * 8;
 	txTrans.rxlength = 0;
 
 	esp_err_t ret;
@@ -106,9 +115,9 @@ void assign_strand(spi_device_handle_t *spi) {
 
 	uint16_t offset = 0;
 
-	txBuffer[offset++] = 0x03;
-	txBuffer[offset++] = 0x00;
-	txBuffer[offset++] = 0x00;
+	txBufferA[offset++] = RequestType::ClearAssignPixelData;
+	txBufferA[offset++] = 0x00;
+	txBufferA[offset++] = 0x00;
 
 	for (uint16_t particleIndex = 0; particleIndex < PARTICLES;
 			particleIndex++) {
@@ -119,25 +128,25 @@ void assign_strand(spi_device_handle_t *spi) {
 			int16_t position = particle->position + (tail * direction);
 
 			if (position > 0 && position < 300) {
-				txBuffer[offset++] = position / 256;
-				txBuffer[offset++] = position % 256;
-				txBuffer[offset++] = 0x00;
-				txBuffer[offset++] = 0x00;
-				txBuffer[offset++] = particle->color[0] / (tail + 1);
-				txBuffer[offset++] = particle->color[1] / (tail + 1);
-				txBuffer[offset++] = particle->color[2] / (tail + 1);
-				txBuffer[offset++] = particle->color[3] / (tail + 1);
+				txBufferA[offset++] = position / 256;
+				txBufferA[offset++] = position % 256;
+				txBufferA[offset++] = 0x00;
+				txBufferA[offset++] = 0x00;
+				txBufferA[offset++] = particle->color[0] / (tail + 1);
+				txBufferA[offset++] = particle->color[1] / (tail + 1);
+				txBufferA[offset++] = particle->color[2] / (tail + 1);
+				txBufferA[offset++] = particle->color[3] / (tail + 1);
 			}
 		}
 	}
 
 	uint16_t bodyBytes = offset - 3;
-	txBuffer[1] = ((uint8_t) (bodyBytes / 256));
-	txBuffer[2] = ((uint8_t) (bodyBytes % 256));
+	txBufferA[1] = ((uint8_t) (bodyBytes / 256));
+	txBufferA[2] = ((uint8_t) (bodyBytes % 256));
 
+	txTrans.tx_buffer = txBufferA;
 	txTrans.rx_buffer = NULL;
-	txTrans.tx_buffer = txBuffer;
-	txTrans.length = 263 * 8;
+	txTrans.length = NETWORK_PACKET_SIZE * 8;
 	txTrans.rxlength = 0;
 
 	esp_err_t ret;
@@ -146,10 +155,10 @@ void assign_strand(spi_device_handle_t *spi) {
 	ESP_ERROR_CHECK(ret);
 }
 
- void strandTask(void *pvParameters){
+void strandTask(void *pvParameters) {
 	ESP_LOGI("StrandTask", "Task start");
 
-	struct TaskParameters *taskParameters = (TaskParameters *)pvParameters;
+	struct TaskParameters *taskParameters = (TaskParameters*) pvParameters;
 
 	uint8_t particleIndex = 0;
 	uint32_t velocityRandom;
@@ -209,6 +218,66 @@ void assign_strand(spi_device_handle_t *spi) {
 	ESP_ERROR_CHECK(gpio_config(&gpio_conf));
 	ESP_ERROR_CHECK(gpio_set_level(GPIO_NUM_4, 0));
 
+	//Configure the target to use matrix mode
+	uint16_t width = 300;
+	uint16_t height = 1;
+
+	struct ConfigurationDefinition configurationDefinition = {
+		.version = CONFIGURATION_VERSION,
+		.displayType = ConfigurationDisplayType::WS2812Strand,
+		.widthH = UINT16_TO_HBYTE(width),
+		.widthL = UINT16_TO_LBYTE(width),
+		.heightH = UINT16_TO_HBYTE(height),
+		.heightL = UINT16_TO_LBYTE(height),
+		.elements = 1,
+		.pixelMappingType = 0 };
+
+	txBufferA[0] = RequestType::Configure;
+
+	uint16_t messageSize = sizeof(struct ConfigurationDefinition);
+	txBufferA[1] = messageSize >> 8;
+	txBufferA[2] = messageSize & 0xFF;
+
+	memcpy(&txBufferA[3], &configurationDefinition, messageSize);
+
+	vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+	vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+	vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+
+	spi_transaction_t txTrans = {
+
+	};
+
+	txTrans.tx_buffer = txBufferA;
+	txTrans.rx_buffer = NULL;
+	txTrans.length = NETWORK_PACKET_SIZE * 8;
+	txTrans.rxlength = 0;
+
+//	while (1) {
+	ESP_ERROR_CHECK(
+			spi_device_polling_transmit(taskParameters->spiDevice, &txTrans));
+
+	ESP_LOGI("StrandTask", "Configuration sent - %d", messageSize);
+//		for (int i = 0; i < 50; i++) {
+//			vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+//			vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+//			vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+//			vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+//			vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+//			vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+//			vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+//			vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+//			vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+//			vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+//			vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+//			vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+//		}
+//	}
+
+	vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+	vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+	vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+
 	uint16_t shift = 0;
 	uint16_t pixels = 64;
 
@@ -260,13 +329,13 @@ void assign_strand(spi_device_handle_t *spi) {
 		assign_strand(&taskParameters->spiDevice);
 		ESP_ERROR_CHECK(gpio_set_level(GPIO_NUM_4, 0));
 
-		vTaskDelay(1 / portTICK_PERIOD_MS);
+		vTaskDelay(MESSAGE_DELAY_MS / portTICK_PERIOD_MS);
 
 		ESP_ERROR_CHECK(gpio_set_level(GPIO_NUM_4, 1));
 		commit_strand(&taskParameters->spiDevice);
 		ESP_ERROR_CHECK(gpio_set_level(GPIO_NUM_4, 0));
 
-		vTaskDelay(1 / portTICK_PERIOD_MS);
+		vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
 
 		shift++;
 	}

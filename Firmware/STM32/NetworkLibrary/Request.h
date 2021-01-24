@@ -20,7 +20,7 @@ public:
 
 	uint8_t type;
 	uint16_t bodyLength;
-	uint8_t body[NETWORK_PACKET_MAXIMUM_SIZE];
+	uint8_t body[NETWORK_PACKET_SIZE];
 
 private:
 	bool ParseSetPixelDataRequest();

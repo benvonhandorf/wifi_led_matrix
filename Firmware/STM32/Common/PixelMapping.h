@@ -67,7 +67,7 @@ public:
 		uint16_t xOffset = (panelCount - 1) - panel * panelWidth;
 
 		PixelMapping::Pixel output {
-			.x= xOffset + input.x,
+			.x= (uint16_t) (xOffset + input.x),
 			.y = lineOnPanel
 		};
 

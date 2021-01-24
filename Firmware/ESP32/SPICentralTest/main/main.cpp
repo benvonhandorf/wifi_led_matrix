@@ -22,8 +22,8 @@ esp_err_t event_handler(void *ctx, system_event_t *event) {
 #define PIN_NUM_CLK  18
 #define PIN_NUM_CS   5
 
-uint8_t txBuffer[1024];
-uint8_t rxBuffer[1024];
+uint8_t txBufferA[2048];
+uint8_t txBufferB[2048];
 
 struct TaskParameters taskParameters;
 
@@ -80,11 +80,11 @@ extern "C" void app_main(void) {
 
 	xTaskHandle taskHandle;
 
-//	xTaskCreatePinnedToCore(strandTask, "StrandTask", 10000, &taskParameters,
-//	tskIDLE_PRIORITY + 10, &taskHandle, 1);
-
-	xTaskCreatePinnedToCore(matrixTask, "MatrixTask", 10000, &taskParameters,
+	xTaskCreatePinnedToCore(strandTask, "StrandTask", 10000, &taskParameters,
 	tskIDLE_PRIORITY + 10, &taskHandle, 1);
+
+//	xTaskCreatePinnedToCore(matrixTask, "MatrixTask", 10000, &taskParameters,
+//	tskIDLE_PRIORITY + 10, &taskHandle, 1);
 
 	ESP_LOGI("main", "Before scheduler start");
 

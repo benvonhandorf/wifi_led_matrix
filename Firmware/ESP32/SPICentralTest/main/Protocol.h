@@ -1,14 +1,12 @@
 /*
  * Protocol.h
  *
- *  Created on: Dec 6, 2020
+ *  Created on: Jan 23, 2021
  *      Author: benvh
  */
 
-#ifndef PROTOCOL_H_
-#define PROTOCOL_H_
-
-#include <stdint.h>
+#ifndef MAIN_PROTOCOL_H_
+#define MAIN_PROTOCOL_H_
 
 #define NETWORK_PACKET_SIZE	2048
 
@@ -20,7 +18,7 @@ constexpr int MESSAGE_BODY_BYTES = NETWORK_PACKET_SIZE - PROTOCOL_HEADER;
 
 #define COMMIT_DELAY_MS 10
 
-#define zzzzzzzzzzzzzzzcs(bytes) (bytes[0] << 8 | bytes[1])
+#define BYTES_TO_UINT16(bytes) (bytes[0] << 8 | bytes[1])
 #define BYTES_TO_UINT16(byteH, byteL) (byteH << 8 | byteL)
 
 #define UINT16_TO_HBYTE(i) ((uint8_t) (i >> 8))
@@ -104,4 +102,4 @@ struct __attribute__((__packed__)) ConfigurationDefinition {
 	uint8_t pixelMappingType;
 };
 
-#endif /* PROTOCOL_H_ */
+#endif /* MAIN_PROTOCOL_H_ */

@@ -8,13 +8,15 @@
 #ifndef SRC_LEDSINGLEWIRE_H_
 #define SRC_LEDSINGLEWIRE_H_
 
+#include "configuration.h"
+
 class LedSingleWire : public DisplayDriver {
 public:
 	enum Format { RGBW, GRBW };
 
-	LedSingleWire(Format format, uint8_t strandCount, uint16_t pixelCount);
+	LedSingleWire();
 
-	void Open();
+	void Open(Configuration *configuration);
 
 	void Close();
 

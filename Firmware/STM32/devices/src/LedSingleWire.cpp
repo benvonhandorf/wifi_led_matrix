@@ -24,10 +24,13 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim) {
 	instance->StartNextDma();
 }
 
-LedSingleWire::LedSingleWire(Format format, uint8_t strandCount,
-		uint16_t pixelCount) {
-	this->format = format;
-	this->strandCount = strandCount;
+LedSingleWire::LedSingleWire() {
+	instance = this;
+}
+
+void LedSingleWire::Open(Configuration *configuration) {
+	this->format = (LedSingleWire::Format) configuration->strandFormat;
+	this->strandCount = configuration->elementCount;
 
 	switch (this->format) {
 	case RGBW:
@@ -38,14 +41,10 @@ LedSingleWire::LedSingleWire(Format format, uint8_t strandCount,
 
 	//Each time division will be ~ 0.3uS.  0 looks like 0.3us/0.9us.  1 looks like 0.6us/0.6us so
 	//each bit requires 4 time divisions
-	this->pixelCount = pixelCount;
+	this->pixelCount = configuration->elementWidth;
 	this->bufferLength = (SLOTS_PER_BIT * bytesPerPixel * 8 * pixelCount)
 			+ LEAD_IN + LEAD_OUT;
 
-	instance = this;
-}
-
-void LedSingleWire::Open() {
 	buffer = new uint16_t[this->bufferLength];
 
 	//Blanks the string

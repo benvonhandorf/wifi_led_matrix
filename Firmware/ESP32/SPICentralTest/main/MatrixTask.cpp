@@ -20,32 +20,46 @@
 
 #include "../data/image.h"
 
-extern uint8_t txBuffer[1024];
-extern uint8_t rxBuffer[1024];
-#define MESSAGE_BODY_BYTES 260
+#include "string.h"
 
-#define PROTOCOL_HEADER 3
+#include "Protocol.h"
+
+extern uint8_t txBufferA[2048];
+extern uint8_t txBufferB[2048];
+
 #define MESSAGE_HEADER 4
 #define BYTES_PER_PIXEL 4
+
 constexpr uint16_t DATA_POSITION = PROTOCOL_HEADER + MESSAGE_HEADER;
 constexpr uint16_t PIXELS_PER_MESSAGE = (MESSAGE_BODY_BYTES - MESSAGE_HEADER)
 		/ BYTES_PER_PIXEL;
 
-static spi_transaction_t txTrans;
-
 #define TASK_NAME "MatrixTask"
 
 void matrixTask(void *pvParameters) {
-	ESP_LOGI("StrandTask", "Task start");
+	ESP_LOGI(TASK_NAME, "Task start");
+
+	static spi_transaction_t txTransA;
+	static spi_transaction_t txTransB;
+	static bool useA = true;
+
+	spi_transaction_t *txTrans = useA ? &txTransA : &txTransB;
+
+	uint8_t *txBuffer = useA ? txBufferA : txBufferB;
 
 	TaskParameters *taskParameters = (TaskParameters*) pvParameters;
 
 	uint8_t frame = 0;
 
-	txTrans.rx_buffer = NULL;
-	txTrans.tx_buffer = txBuffer;
-	txTrans.length = (MESSAGE_BODY_BYTES + PROTOCOL_HEADER) * 8;
-	txTrans.rxlength = 0;
+	txTransA.rx_buffer = NULL;
+	txTransA.tx_buffer = txBufferA;
+	txTransA.length = (MESSAGE_BODY_BYTES + PROTOCOL_HEADER) * 8;
+	txTransA.rxlength = 0;
+
+	txTransB.rx_buffer = NULL;
+	txTransB.tx_buffer = txBufferB;
+	txTransB.length = (MESSAGE_BODY_BYTES + PROTOCOL_HEADER) * 8;
+	txTransB.rxlength = 0;
 
 	gpio_config_t gpio_conf = {
 		.pin_bit_mask = 1 << 4,
@@ -54,10 +68,42 @@ void matrixTask(void *pvParameters) {
 	ESP_ERROR_CHECK(gpio_config(&gpio_conf));
 	ESP_ERROR_CHECK(gpio_set_level(GPIO_NUM_4, 0));
 
+	//Configure the target to use matrix mode
+	uint16_t width = 64;
+	uint16_t height = 32;
+
+	struct ConfigurationDefinition configurationDefinition = {
+		.version = CONFIGURATION_VERSION,
+		.displayType = ConfigurationDisplayType::Matrix,
+		.widthH = UINT16_TO_HBYTE(width),
+		.widthL = UINT16_TO_LBYTE(width),
+		.heightH = UINT16_TO_HBYTE(height),
+		.heightL = UINT16_TO_LBYTE(height),
+		.elements = 2,
+		.pixelMappingType = 2 };
+
+	txBuffer[0] = RequestType::Configure;
+
+	uint16_t messageSize = sizeof(struct ConfigurationDefinition);
+	txBuffer[1] = messageSize >> 8;
+	txBuffer[2] = messageSize & 0xFF;
+
+	memcpy(&txBuffer[3], &configurationDefinition, messageSize);
+
+	ESP_ERROR_CHECK(
+			spi_device_polling_transmit(taskParameters->spiDevice,
+					txTrans));
+
+	vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+	vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+	vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
+
+	ESP_LOGI(TASK_NAME, "Configuration sent");
+
 	while (1) {
 		uint16_t pixelCount = 0;
 
-		txBuffer[0] = 0x01;
+		txBuffer[0] = RequestType::SetPixelData;
 
 		for (uint16_t y = 0; y < IMAGE_HEIGHT; y++) {
 			for (uint16_t x = 0; x < IMAGE_WIDTH; x++) {
@@ -102,9 +148,15 @@ void matrixTask(void *pvParameters) {
 
 					ESP_ERROR_CHECK(
 							spi_device_polling_transmit(
-									taskParameters->spiDevice, &txTrans));
+									taskParameters->spiDevice, txTrans));
 
-					vTaskDelay(7 / portTICK_PERIOD_MS);
+					useA = !useA;
+					txTrans = useA ? &txTransA : &txTransB;
+					txBuffer = useA ? txBufferA : txBufferB;
+
+					txBuffer[0] = RequestType::SetPixelData;
+
+					vTaskDelay(MESSAGE_DELAY_MS / portTICK_PERIOD_MS);
 
 					pixelCount = 0;
 				}
@@ -113,20 +165,24 @@ void matrixTask(void *pvParameters) {
 
 		if (pixelCount > 0) {
 			uint16_t messageBytes = 4 + (BYTES_PER_PIXEL * pixelCount);
-			txBuffer[1] = messageBytes >> 8;
-			txBuffer[2] = messageBytes & 0xFF;
+			txBufferA[1] = messageBytes >> 8;
+			txBufferA[2] = messageBytes & 0xFF;
 			ESP_ERROR_CHECK(
 					spi_device_polling_transmit(taskParameters->spiDevice,
-							&txTrans));
+							txTrans));
 
-			vTaskDelay(7 / portTICK_PERIOD_MS);
+			useA = !useA;
+			txTrans = useA ? &txTransA : &txTransB;
+			txBuffer = useA ? txBufferA : txBufferB;
+
+			vTaskDelay(MESSAGE_DELAY_MS / portTICK_PERIOD_MS);
 
 //			ESP_LOGI(TASK_NAME, "Frame Completion");
 
 			pixelCount = 0;
 		}
 
-		txBuffer[0] = 0x02;
+		txBuffer[0] = RequestType::Commit;
 		txBuffer[1] = 0;
 		txBuffer[2] = 0;
 
@@ -134,13 +190,17 @@ void matrixTask(void *pvParameters) {
 
 		ESP_ERROR_CHECK(
 				spi_device_polling_transmit(taskParameters->spiDevice,
-						&txTrans));
+						txTrans));
+
+		useA = !useA;
+		txTrans = useA ? &txTransA : &txTransB;
+		txBuffer = useA ? txBufferA : txBufferB;
 
 //		ESP_LOGI(TASK_NAME, "Frame Commit");
 
 		ESP_ERROR_CHECK(gpio_set_level(GPIO_NUM_4, 0));
 
-		vTaskDelay(10 / portTICK_PERIOD_MS);
+		vTaskDelay(COMMIT_DELAY_MS / portTICK_PERIOD_MS);
 
 		frame++;
 
@@ -152,11 +212,10 @@ void matrixTask(void *pvParameters) {
 }
 
 MatrixTask::MatrixTask() {
-	// TODO Auto-generated constructor stub
 
 }
 
 MatrixTask::~MatrixTask() {
-	// TODO Auto-generated destructor stub
+
 }
 
