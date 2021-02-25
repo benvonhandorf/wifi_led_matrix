@@ -10,7 +10,6 @@
 #include "esp_wifi.h"
 #include "esp_system.h"
 #include "esp_event.h"
-#include "nvs_flash.h"
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
 
@@ -21,6 +20,8 @@
 #include "Protocol.h"
 
 #include "string.h"
+
+#include "Colors.h"
 
 extern uint8_t txBufferA[2048];
 extern uint8_t txBufferB[2048];
@@ -92,7 +93,7 @@ void commit_strand(spi_device_handle_t *spi) {
 
 	esp_err_t ret;
 
-	ESP_LOGI("StrandTask", "Commit");
+	//ESP_LOGI("StrandTask", "Commit");
 
 	ret = spi_device_polling_transmit(*spi, &txTrans);
 	ESP_ERROR_CHECK(ret);
@@ -170,7 +171,7 @@ void strandTask(void *pvParameters) {
 	particles[particleIndex].velocity =
 			particles[particleIndex].velocity ?
 					particles[particleIndex].velocity : 1;
-	esp_fill_random(particles[particleIndex].color, 4);
+	random_rgbw_uint8_t(particles[particleIndex].color);
 	particles[particleIndex].color[3] /= 8;
 
 	particleIndex++;
@@ -182,7 +183,7 @@ void strandTask(void *pvParameters) {
 	particles[particleIndex].velocity =
 			particles[particleIndex].velocity ?
 					particles[particleIndex].velocity : 1;
-	esp_fill_random(particles[particleIndex].color, 4);
+	random_rgbw_uint8_t(particles[particleIndex].color);
 	particles[particleIndex].color[3] /= 8;
 
 	particleIndex++;
@@ -194,7 +195,7 @@ void strandTask(void *pvParameters) {
 	particles[particleIndex].velocity =
 			particles[particleIndex].velocity ?
 					particles[particleIndex].velocity : 1;
-	esp_fill_random(particles[particleIndex].color, 4);
+	random_rgbw_uint8_t(particles[particleIndex].color);
 	particles[particleIndex].color[3] /= 8;
 
 	particleIndex++;
@@ -206,7 +207,7 @@ void strandTask(void *pvParameters) {
 	particles[particleIndex].velocity =
 			particles[particleIndex].velocity ?
 					particles[particleIndex].velocity : 1;
-	esp_fill_random(particles[particleIndex].color, 4);
+	random_rgbw_uint8_t(particles[particleIndex].color);
 	particles[particleIndex].color[3] /= 8;
 
 	esp_err_t ret;
@@ -282,7 +283,7 @@ void strandTask(void *pvParameters) {
 	uint16_t pixels = 64;
 
 	while (1) {
-		ESP_LOGI("StrandTask", "Loop, shift %d", shift);
+		//ESP_LOGI("StrandTask", "Loop, shift %d", shift);
 
 		for (particleIndex = 0; particleIndex < PARTICLES; particleIndex++) {
 			particles[particleIndex].position +=

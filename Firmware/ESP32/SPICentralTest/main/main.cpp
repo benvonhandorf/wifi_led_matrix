@@ -12,6 +12,8 @@
 #include "TaskParameters.h"
 #include "MatrixTask.h"
 #include "StrandTask.h"
+#include "ControlTask.h"
+#include "I2SMicrophoneInput.h"
 
 esp_err_t event_handler(void *ctx, system_event_t *event) {
 	return ESP_OK;
@@ -78,10 +80,16 @@ extern "C" void app_main(void) {
 
 	initializeSpi();
 
-	xTaskHandle taskHandle;
+	xTaskHandle displayTaskHandle, controlTaskHandle, micTaskHandle;
 
 	xTaskCreatePinnedToCore(strandTask, "StrandTask", 10000, &taskParameters,
-	tskIDLE_PRIORITY + 10, &taskHandle, 1);
+	tskIDLE_PRIORITY + 10, &displayTaskHandle, 1);
+
+//	xTaskCreate(controlTask, "ControlTask", 10000, NULL,
+//	tskIDLE_PRIORITY + 5, &controlTaskHandle);
+
+	xTaskCreate(i2sMicrophoneInputTask, "MicTask", 10000, NULL,
+	tskIDLE_PRIORITY + 5, &micTaskHandle);
 
 //	xTaskCreatePinnedToCore(matrixTask, "MatrixTask", 10000, &taskParameters,
 //	tskIDLE_PRIORITY + 10, &taskHandle, 1);

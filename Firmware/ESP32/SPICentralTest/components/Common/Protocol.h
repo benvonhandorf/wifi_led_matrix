@@ -18,7 +18,7 @@ constexpr int MESSAGE_BODY_BYTES = NETWORK_PACKET_SIZE - PROTOCOL_HEADER;
 
 #define COMMIT_DELAY_MS 10
 
-#define BYTES_TO_UINT16(bytes) (bytes[0] << 8 | bytes[1])
+#define BYTEPTR_TO_UINT16(bytes) (bytes[0] << 8 | bytes[1])
 #define BYTES_TO_UINT16(byteH, byteL) (byteH << 8 | byteL)
 
 #define UINT16_TO_HBYTE(i) ((uint8_t) (i >> 8))

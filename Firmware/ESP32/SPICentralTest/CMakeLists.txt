@@ -5,5 +5,3 @@ set(CMAKE_CXX_STANDARD 20)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(app-template)
-
-set(COMPONENT_ADD_INCLUDEDIRS "data")
