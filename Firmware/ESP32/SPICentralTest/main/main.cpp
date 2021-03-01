@@ -82,8 +82,8 @@ extern "C" void app_main(void) {
 
 	xTaskHandle displayTaskHandle, controlTaskHandle, micTaskHandle;
 
-	xTaskCreatePinnedToCore(strandTask, "StrandTask", 10000, &taskParameters,
-	tskIDLE_PRIORITY + 10, &displayTaskHandle, 1);
+//	xTaskCreatePinnedToCore(strandTask, "StrandTask", 10000, &taskParameters,
+//	tskIDLE_PRIORITY + 10, &displayTaskHandle, 1);
 
 //	xTaskCreate(controlTask, "ControlTask", 10000, NULL,
 //	tskIDLE_PRIORITY + 5, &controlTaskHandle);

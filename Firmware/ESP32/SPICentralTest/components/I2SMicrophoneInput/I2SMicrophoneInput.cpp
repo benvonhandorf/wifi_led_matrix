@@ -13,6 +13,8 @@
 #include "esp_event.h"
 #include "dsps_wind_hann.h"
 #include "dsps_fft2r.h"
+#include "dsps_view.h"
+#include "dsps_tone_gen.h"
 #include <math.h>
 
 I2SMicrophoneInput::I2SMicrophoneInput() {
@@ -30,7 +32,7 @@ static const i2s_config_t i2s_config = {
 	.mode = (i2s_mode_t) (I2S_MODE_MASTER | I2S_MODE_RX),
 	.sample_rate = SAMPLE_RATE,
 	.bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
-	.channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
+	.channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
 	.communication_format = I2S_COMM_FORMAT_STAND_I2S,
 	.intr_alloc_flags = 0, // default interrupt priority
 	.dma_buf_count = 8,
@@ -43,22 +45,31 @@ static const i2s_pin_config_t pin_config = {
 	.data_out_num = I2S_PIN_NO_CHANGE,
 	.data_in_num = 27 };
 
-#define BUFFER_SAMPLES 8192
+#define BUFFER_SAMPLES 1024
 
-uint8_t data[BUFFER_SAMPLES * 2 * 4];
+uint8_t data[BUFFER_SAMPLES * 4] = {0};
 
-int16_t i2s_data(uint8_t *data) {
-	return ((uint16_t) data[4] << 8) | data[3];
-}
+float tone[BUFFER_SAMPLES];
 
-int16_t dsp_sin_cos[512];
-int16_t fft_buffer[BUFFER_SAMPLES * 2];
+//int16_t i2s_data(uint8_t *data) {
+//	return ((uint16_t) data[4] << 8) | data[3];
+//}
+
+//float dsp_sin_cos[512];
+float fft_buffer[BUFFER_SAMPLES * 2];
 float hann_window[BUFFER_SAMPLES];
-char output[100];
+//char output[100];
 
-#define RESULT_BUCKETS 80
-int16_t results[RESULT_BUCKETS];
-constexpr int result_hz_per_bucket = (SAMPLE_RATE / 2) / RESULT_BUCKETS;
+float x1[BUFFER_SAMPLES];
+float x2[BUFFER_SAMPLES];
+
+//float y_cf[BUFFER_SAMPLES*2];
+// Pointers to result arrays
+float* y1_cf = &fft_buffer[0];
+float* y2_cf = &fft_buffer[BUFFER_SAMPLES]; //We reuse the second half of the array since after the FFT anything at sampling rate / 2 or greater is useless.  Nyquist.
+
+
+//constexpr int result_hz_per_bucket = (SAMPLE_RATE / 2) / RESULT_BUCKETS;
 
 
 void i2sMicrophoneInputTask(void *pvParameters) {
@@ -66,7 +77,7 @@ void i2sMicrophoneInputTask(void *pvParameters) {
 	ESP_ERROR_CHECK(i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL));
 	ESP_ERROR_CHECK(i2s_set_pin(I2S_NUM_0, &pin_config));
 
-	ESP_ERROR_CHECK(dsps_fft2r_init_sc16(dsp_sin_cos, 512));
+	ESP_ERROR_CHECK(dsps_fft2r_init_fc32(NULL, CONFIG_DSP_MAX_FFT_SIZE));
 	dsps_wind_hann_f32(hann_window, BUFFER_SAMPLES);
 
 	size_t bytes_read;
@@ -76,77 +87,67 @@ void i2sMicrophoneInputTask(void *pvParameters) {
 	ESP_LOGI("MIC_TASK", "%f", hzPerBucket);
 
 	while (1) {
-//		ESP_ERROR_CHECK(
-//				i2s_read(I2S_NUM_0, data, BUFFER_SAMPLES * 2 * 4, &bytes_read, 100 * portTICK_RATE_MS));
-
-
-
-//		float mean = 0.0f;
-//
-//		for (uint32_t i = 0; i < BUFFER_SAMPLES; i++) {
-//			uint32_t msb_index = (i * 8);
-//			int16_t lvalue = data[msb_index + 1] << 8 | data[msb_index + 2];
-//
-//			mean += lvalue;
-//
-//			fft_buffer[(i * 2)] = lvalue * hann_window[i];
-//			fft_buffer[(i * 2) + 1] = 0;
-//		}
+		ESP_ERROR_CHECK(
+				i2s_read(I2S_NUM_0, data, BUFFER_SAMPLES * 4, &bytes_read, 100 * portTICK_RATE_MS));
 
 		float mean = 0.0f;
-
-		double samples_per_iteration = ((double)SAMPLE_RATE) / 10000;
-		double multiplier = (2 * 3.14159) / samples_per_iteration;
-		double scale = 500;
+		float peak = 0.0f;
 
 		for (uint32_t i = 0; i < BUFFER_SAMPLES; i++) {
-			int16_t lvalue = sin(i * multiplier) * scale;
-			mean += lvalue;
+			uint32_t msb_index = (i * 4);
+			int16_t value = data[msb_index + 3] << 8 | data[msb_index + 2];
 
-			fft_buffer[(i * 2)] = lvalue * hann_window[i];
-			fft_buffer[(i * 2) + 1] = 0;
+			mean += value;
 
-			ESP_LOGI("MIC_TASK", "%d - %d", i, lvalue);
+			if(value > peak) {
+				peak = value;
+			}
 
-			vTaskDelay(1);
+			fft_buffer[(i * 2)] = value * hann_window[i];
+			fft_buffer[(i * 2) + 1] = 0.0f;//Complex portion
 		}
 
 		mean /= BUFFER_SAMPLES;
 
-		ESP_LOGI("MIC_TASK", "Sample mean: %f", mean);
-
-		ESP_ERROR_CHECK(
-				dsps_fft2r_sc16_ae32_(fft_buffer, BUFFER_SAMPLES, dsp_sin_cos));
-
-		ESP_ERROR_CHECK(dsps_bit_rev_sc16_ansi(fft_buffer, BUFFER_SAMPLES));
-
-		ESP_ERROR_CHECK(dsps_cplx2reC_sc16(fft_buffer, BUFFER_SAMPLES));
-
-		for (uint32_t i = 0; i < RESULT_BUCKETS; i++) {
-			results[i] = 0;
+		for (uint32_t i = 0; i < BUFFER_SAMPLES; i++) {
+			fft_buffer[(i * 2)] -= mean;
 		}
 
+		ESP_LOGI("MIC_TASK", "Sample mean: %f Peak %f over %d bytes", mean, peak, bytes_read);
+
+		ESP_ERROR_CHECK(
+				dsps_fft2r_fc32(fft_buffer, BUFFER_SAMPLES));
+
+		ESP_ERROR_CHECK(dsps_bit_rev_fc32(fft_buffer, BUFFER_SAMPLES));
+
+		ESP_ERROR_CHECK(dsps_cplx2reC_fc32(fft_buffer, BUFFER_SAMPLES));
+
 		for (uint32_t i = 0; i < (BUFFER_SAMPLES / 2); i++) {
-			int16_t combined = ((fft_buffer[(i * 2)] * fft_buffer[(i * 2)]) + (fft_buffer[(i * 2) +1] * fft_buffer[(i * 2) +1])) / BUFFER_SAMPLES;
-			int16_t frequency = i * hzPerBucket;
+			float combined = 10 * log10f(((fft_buffer[(i * 2)] * fft_buffer[(i * 2)]) + (fft_buffer[(i * 2) +1] * fft_buffer[(i * 2) +1])) / BUFFER_SAMPLES);
 
-			int16_t frequency_bucket = frequency / result_hz_per_bucket;
-
-			results[frequency_bucket] += combined;
+			fft_buffer[i] = combined;
 		}
 
 		mean = 0.0f;
+		peak = 0.0f;
+		float min = 0.0f;
 
-		for (uint32_t i = 0; i < RESULT_BUCKETS; i++) {
-			mean += results[i];
-//			ESP_LOGI("MIC_TASK", "%d - %d\t=\t%d", i, i * result_hz_per_bucket,
-//					results[i]);
+		for (uint32_t i = 0; i < BUFFER_SAMPLES / 2; i++) {
+			mean += y1_cf[i];
+			if(fft_buffer[i] > peak) {
+				peak = fft_buffer[i];
+			}
+			if(fft_buffer[i] < min) {
+				min = fft_buffer[i];
+			}
 		}
 
-		mean /= RESULT_BUCKETS;
+		mean /= BUFFER_SAMPLES;
 
-		ESP_LOGI("MIC_TASK", "Mean: %f", mean);
+//		dsps_view(fft_buffer, BUFFER_SAMPLES/2, 64, 10,  -20.0f, 0.0f, '|');
 
-		vTaskDelay(10 * portTICK_PERIOD_MS);
+		ESP_LOGI("MIC_TASK", "Mean: %f Peak: %f Min: %f", mean, peak, min);
+
+		vTaskDelay(1 * portTICK_PERIOD_MS);
 	}
 }
