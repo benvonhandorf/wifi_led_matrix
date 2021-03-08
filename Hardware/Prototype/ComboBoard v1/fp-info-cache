@@ -1,4 +1,4 @@
-19130272516919248
+19136747587200256
 BVH_Components_Misc
 PAW3204
 
@@ -125,6 +125,13 @@ https://www.cuidevices.com/product/resource/sj-4351x-smt.pdf
 0
 6
 6
+BVH_ESP32_Modules
+ESP32-WROVER-E
+
+
+0
+47
+39
 BVH_Features
 CP_Radial_Horizontal_D13.0mm_P7.50mm
 CP, Radial series, Radial, pin pitch=7.50mm, , diameter=13mm, Electrolytic Capacitor
@@ -139,6 +146,20 @@ SolderJumper
 0
 2
 2
+BVH_Features
+StrainRelief_SmallZipTie
+
+
+0
+0
+0
+BVH_LED
+SK6812Mini-E_Front
+
+
+0
+0
+0
 BVH_Logos
 AB4EN_Orbitron
 
@@ -250,6 +271,13 @@ Rotary_Encoder_W_Switch
 
 0
 7
+6
+BVH_Switches
+ScreenKey_LC24.2
+
+
+0
+6
 6
 BVH_Switches
 TacButton_6mm_6mm

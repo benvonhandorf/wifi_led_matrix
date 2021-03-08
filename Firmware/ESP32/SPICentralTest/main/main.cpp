@@ -1,4 +1,6 @@
 #include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
+
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "esp_system.h"
@@ -9,9 +11,12 @@
 
 #include "string.h"
 
+#include "DisplayBuffer.h"
 #include "TaskParameters.h"
-#include "MatrixTask.h"
-#include "StrandTask.h"
+#include "DisplayTask.h"
+
+//#include "MatrixTask.h"
+#include "ChaserTask.h"
 #include "ControlTask.h"
 #include "I2SMicrophoneInput.h"
 
@@ -24,10 +29,9 @@ esp_err_t event_handler(void *ctx, system_event_t *event) {
 #define PIN_NUM_CLK  18
 #define PIN_NUM_CS   5
 
-uint8_t txBufferA[2048];
-uint8_t txBufferB[2048];
-
 struct TaskParameters taskParameters;
+
+static Configuration deviceConfiguration;
 
 void initializeSpi() {
 	esp_err_t ret;
@@ -80,16 +84,21 @@ extern "C" void app_main(void) {
 
 	initializeSpi();
 
-	xTaskHandle displayTaskHandle, controlTaskHandle, micTaskHandle;
+	deviceConfiguration.height = 1;
+	deviceConfiguration.width = 300;
 
-//	xTaskCreatePinnedToCore(strandTask, "StrandTask", 10000, &taskParameters,
-//	tskIDLE_PRIORITY + 10, &displayTaskHandle, 1);
+	taskParameters.configuration = &deviceConfiguration;
 
-//	xTaskCreate(controlTask, "ControlTask", 10000, NULL,
-//	tskIDLE_PRIORITY + 5, &controlTaskHandle);
+	xTaskHandle displayTaskHandle, chaserTaskHandle, controlTaskHandle, micTaskHandle;
 
-	xTaskCreate(i2sMicrophoneInputTask, "MicTask", 10000, NULL,
-	tskIDLE_PRIORITY + 5, &micTaskHandle);
+	xTaskCreatePinnedToCore(displayTask, "DisplayTask", 10000, &taskParameters,
+	tskIDLE_PRIORITY + 10, &displayTaskHandle, 1);
+
+	xTaskCreate(chaserTask, "ChaserTask", 10000, &taskParameters,
+	tskIDLE_PRIORITY + 5, &chaserTaskHandle);
+
+//	xTaskCreate(i2sMicrophoneInputTask, "MicTask", 10000, NULL,
+//	tskIDLE_PRIORITY + 5, &micTaskHandle);
 
 //	xTaskCreatePinnedToCore(matrixTask, "MatrixTask", 10000, &taskParameters,
 //	tskIDLE_PRIORITY + 10, &taskHandle, 1);

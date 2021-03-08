@@ -8,12 +8,12 @@
 #ifndef MAIN_STRANDTASK_H_
 #define MAIN_STRANDTASK_H_
 
-void strandTask(void *pvParameters);
+void chaserTask(void *pvParameters);
 
-class StrandTask {
+class ChaserTask {
 public:
-	StrandTask();
-	virtual ~StrandTask();
+	ChaserTask();
+	virtual ~ChaserTask();
 };
 
 #endif /* MAIN_STRANDTASK_H_ */
