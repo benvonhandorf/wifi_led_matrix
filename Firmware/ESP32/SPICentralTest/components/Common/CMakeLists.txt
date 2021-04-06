@@ -1,3 +1,3 @@
-idf_component_register(SRCS ""
+idf_component_register(SRCS "PerformanceCounters.cpp"
                        INCLUDE_DIRS "."
                        REQUIRES mbedtls)

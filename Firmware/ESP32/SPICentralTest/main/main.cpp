@@ -19,6 +19,11 @@
 #include "ChaserTask.h"
 #include "ControlTask.h"
 #include "I2SMicrophoneInput.h"
+#include "PerformanceCounters.h"
+
+#include "esp_netif_ip_addr.h"
+
+#include "Server.h"
 
 esp_err_t event_handler(void *ctx, system_event_t *event) {
 	return ESP_OK;
@@ -45,14 +50,13 @@ void initializeSpi() {
 		.quadhd_io_num = -1 };
 	spi_device_interface_config_t devcfg = {
 		.command_bits = 0,
-				.address_bits = 0,
-				.dummy_bits = 0,
-				.mode = 0,          //SPI mode 0
-				.clock_speed_hz = SPI_MASTER_FREQ_20M,
+		.address_bits = 0,
+		.dummy_bits = 0,
+		.mode = 0,          //SPI mode 0
+		.clock_speed_hz = SPI_MASTER_FREQ_20M,
 
 		.spics_io_num = PIN_NUM_CS, //CS pin
-		.queue_size = 1,
-		 };
+		.queue_size = 1, };
 
 	//Initialize the SPI bus
 	ret = spi_bus_initialize(SPI3_HOST, &buscfg, 2);
@@ -62,21 +66,70 @@ void initializeSpi() {
 	ESP_ERROR_CHECK(ret);
 }
 
+static void disconnect_handler(void* esp_netif, esp_event_base_t event_base,
+                               int32_t event_id, void* event_data) {
+	ESP_LOGI("MAIN", "Disconnected");
+}
+
+static void connect_handler(void* esp_netif, esp_event_base_t event_base,
+                            int32_t event_id, void* event_data) {
+
+	ESP_LOGI("MAIN", "Connected");
+}
+
+static void gotip_handler(void* esp_netif, esp_event_base_t event_base,
+                            int32_t event_id, void* event_data) {
+
+	ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+
+	ESP_LOGI("MAIN", "Got IP:" IPSTR, IP2STR(&event->ip_info.ip));
+
+	Server::StartServer();
+}
+
 extern "C" void app_main(void) {
-	nvs_flash_init();
-	tcpip_adapter_init();
-	ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
-	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT()
-	;
+	ESP_ERROR_CHECK(nvs_flash_init());
+	ESP_ERROR_CHECK(esp_netif_init());
+
+	ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+	ESP_ERROR_CHECK(
+			esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
+					&gotip_handler, NULL));
+
+	ESP_ERROR_CHECK(
+			esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_CONNECTED,
+					&connect_handler, NULL));
+
+	ESP_ERROR_CHECK(
+			esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED,
+					&disconnect_handler, NULL));
+
+	esp_netif_create_default_wifi_sta();
+
+	wifi_init_config_t cfg =
+				WIFI_INIT_CONFIG_DEFAULT() ;
+
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
 	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
 	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-	wifi_config_t sta_config ;
+
+    wifi_config_t sta_config ;
+    sta_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
+    sta_config.sta.pmf_cfg.capable = true;
+    sta_config.sta.pmf_cfg.required = false;
+
 	strncpy((char *)sta_config.sta.ssid, CONFIG_ESP_WIFI_SSID, 32);
 	strncpy((char *)sta_config.sta.password, CONFIG_ESP_WIFI_PASSWORD, 64);
-	sta_config.sta.bssid_set = false;
+//	sta_config.sta.bssid_set = false;
+//
+//	sta_config.sta.pmf_cfg.capable = false;
+//	sta_config.sta.pmf_cfg.required = false;
 
-	ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_config));
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
+    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &sta_config) );
+
 	ESP_ERROR_CHECK(esp_wifi_start());
 	ESP_ERROR_CHECK(esp_wifi_connect());
 
@@ -89,7 +142,13 @@ extern "C" void app_main(void) {
 
 	taskParameters.configuration = &deviceConfiguration;
 
-	xTaskHandle displayTaskHandle, chaserTaskHandle, controlTaskHandle, micTaskHandle;
+	xTaskHandle displayTaskHandle,
+	chaserTaskHandle, controlTaskHandle, micTaskHandle,
+			performanceMonitorHandle;
+
+	xTaskCreate(performanceCountersTask, "PerformanceTask", 10000,
+			&taskParameters,
+			tskIDLE_PRIORITY + 5, &performanceMonitorHandle);
 
 	xTaskCreatePinnedToCore(displayTask, "DisplayTask", 10000, &taskParameters,
 	tskIDLE_PRIORITY + 10, &displayTaskHandle, 1);

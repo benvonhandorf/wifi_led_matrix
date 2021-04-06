@@ -11,6 +11,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
+#include "freertos/atomic.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -20,6 +21,8 @@
 #include "DisplayBuffer.h"
 
 #include "Protocol.h"
+
+#include "PerformanceCounters.h"
 
 QueueHandle_t AVAILABLE_DISPLAY_BUFFER;
 QueueHandle_t COMMITTED_DISPLAY_BUFFER;
@@ -200,6 +203,8 @@ void DisplayTask::ProcessBuffer(DisplayBuffer *displayBuffer) {
 		SendMessage(txBuffer);
 
 		xQueueSend(AVAILABLE_COMMAND_BUFFER, &txBuffer, portMAX_DELAY);
+
+		Atomic_Increment_u32(&(performanceCounters.framesDrawn));
 	} else {
 		ESP_LOGI("DisplayTask",
 				"No command available display buffer, frame dropped!");
@@ -220,5 +225,7 @@ void DisplayTask::SendMessage(uint8_t *transmissionBuffer) {
 	ret = spi_device_polling_transmit(spiDevice, &transaction);
 	ESP_ERROR_CHECK(ret);
 
-	vTaskDelay(10 / portTICK_PERIOD_MS);
+	Atomic_Increment_u32(&(performanceCounters.packetsSent));
+
+	vTaskDelay(7 / portTICK_PERIOD_MS);
 }

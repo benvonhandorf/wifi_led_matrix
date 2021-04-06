@@ -17,6 +17,10 @@
 #include "dsps_tone_gen.h"
 #include <math.h>
 
+#include <string.h>
+
+#include "DisplayBuffer.h"
+
 I2SMicrophoneInput::I2SMicrophoneInput() {
 	// TODO Auto-generated constructor stub
 
@@ -47,7 +51,8 @@ static const i2s_pin_config_t pin_config = {
 
 #define BUFFER_SAMPLES 1024
 
-uint8_t data[BUFFER_SAMPLES * 4] = {0};
+uint8_t data[BUFFER_SAMPLES * 4] = {
+	0 };
 
 float tone[BUFFER_SAMPLES];
 
@@ -60,17 +65,159 @@ float fft_buffer[BUFFER_SAMPLES * 2];
 float hann_window[BUFFER_SAMPLES];
 //char output[100];
 
-float x1[BUFFER_SAMPLES];
-float x2[BUFFER_SAMPLES];
+float fft_buffer_previous[BUFFER_SAMPLES / 2];
 
-//float y_cf[BUFFER_SAMPLES*2];
-// Pointers to result arrays
-float* y1_cf = &fft_buffer[0];
-float* y2_cf = &fft_buffer[BUFFER_SAMPLES]; //We reuse the second half of the array since after the FFT anything at sampling rate / 2 or greater is useless.  Nyquist.
+uint8_t pixel_values[] = {
+	0,
+	0,
+	59,
+	93,
+	118,
+	136,
+	152,
+	165,
+	177,
+	187,
+	195,
+	204,
+	211,
+	218,
+	224,
+	230,
+	236,
+	241,
+	246,
+	250,
+	255 };
 
+void valueToPixel(float val, uint8_t *pixel, float min, float max) {
+	float range = (max - min) / 4;
+	float mapping = 20 / range;
 
-//constexpr int result_hz_per_bucket = (SAMPLE_RATE / 2) / RESULT_BUCKETS;
+	if (val > ((3 * range) + min)) {
+		val = val - ((3 * range) + min);
+		uint8_t lookup = round(val * mapping);
+		pixel[2] = pixel_values[lookup];
+	} else if (val > ((2 * range) + min)) {
+		val = val - ((2 * range) + min);
+		uint8_t lookup = round(val * mapping);
+		pixel[1] = pixel_values[lookup];
+	} else if (val > ((1 * range) + min)) {
+		val = val - ((1 * range) + min);
+		uint8_t lookup = round(val * mapping);
 
+//		ESP_LOGI("MIC_TASK", "val: %f mapping: %f lookup %d value %d", val,
+//				mapping, lookup, pixel_values[lookup]);
+
+		pixel[0] = pixel_values[lookup];
+	}
+}
+
+void calculate_range(uint16_t buckets, float *min, float *max, float *mean) {
+	for (uint32_t i = 0; i < buckets; i++) {
+		*mean += fft_buffer[i];
+
+		if (fft_buffer[i] > *max) {
+			*max = fft_buffer[i];
+		}
+		if (fft_buffer[i] < *min) {
+			*min = fft_buffer[i];
+		}
+	}
+
+	*mean /= buckets;
+
+	if (*mean < 15) {
+		*mean = 15;
+	}
+
+	if (*max < 60) {
+		*max = 60;
+	}
+}
+
+void render_strand_linear(DisplayBuffer *displayBuffer, uint16_t buckets) {
+	float min, max, mean;
+
+	calculate_range(buckets, &min, &max, &mean);
+
+	uint8_t pixelsPerBucket = 1; //displayBuffer->width / buckets;
+//			pixelsPerBucket = pixelsPerBucket > 0 ? pixelsPerBucket : 1;
+
+	memset(displayBuffer->buffer, 0,
+			displayBuffer->width * displayBuffer->height * 4);
+
+	for (uint32_t i = 0; i < buckets; i++) {
+		for (uint8_t j = 0; j < pixelsPerBucket; j++) {
+			uint16_t offset = ((i * pixelsPerBucket) + j) * 4;
+
+			if (((i * pixelsPerBucket) + j) <= displayBuffer->width) {
+				float val = (fft_buffer[i + 10] * 0.8)
+						+ (fft_buffer_previous[i + 10] * 0.2);
+				fft_buffer_previous[i + 10] = val;
+
+				valueToPixel(val, displayBuffer->buffer + offset, mean, max);
+			}
+		}
+	}
+
+}
+
+void render_strand_center_reflected(DisplayBuffer *displayBuffer,
+		uint16_t buckets) {
+	float min, max, mean;
+
+	calculate_range(buckets, &min, &max, &mean);
+
+	uint16_t pixels = displayBuffer->width / 2;
+
+	uint8_t pixelsPerBucket = 1; //displayBuffer->width / buckets;
+//			pixelsPerBucket = pixelsPerBucket > 0 ? pixelsPerBucket : 1;
+	uint8_t buckets_per_pixel = buckets / pixels;
+
+	memset(displayBuffer->buffer, 0,
+			displayBuffer->width * displayBuffer->height * 4);
+
+	for (uint32_t bucket = 0; bucket <= (buckets - buckets_per_pixel); bucket +=
+			buckets_per_pixel) {
+		for (uint8_t j = 0; j < pixelsPerBucket; j++) {
+
+			float val = 0.0;
+			for (uint32_t pixelBucket = 0; pixelBucket < buckets_per_pixel;
+					pixelBucket++) {
+				float pixel_val =
+						(fft_buffer[bucket + pixelBucket + 10] * 0.8)
+								+ (fft_buffer_previous[bucket + pixelBucket + 10]
+										* 0.2);
+
+				fft_buffer_previous[bucket + pixelBucket + 10] = pixel_val;
+
+				val += pixel_val;
+			}
+
+			val /= buckets_per_pixel;
+
+			//Set this to the pixels above and below the center
+
+			int16_t pixel = (pixels + ((bucket * pixelsPerBucket) + j));
+
+			int16_t offset = pixel * 4;
+
+			if (pixel >= 0 && pixel < displayBuffer->width) {
+				valueToPixel(val, displayBuffer->buffer + offset, mean, max);
+			}
+
+			pixel = ((pixels - 1) - ((bucket * pixelsPerBucket) + j));
+
+			offset = pixel * 4;
+
+			if (pixel >= 0 && pixel < displayBuffer->width) {
+				valueToPixel(val, displayBuffer->buffer + offset, mean, max);
+			}
+		}
+	}
+
+}
 
 void i2sMicrophoneInputTask(void *pvParameters) {
 
@@ -82,16 +229,18 @@ void i2sMicrophoneInputTask(void *pvParameters) {
 
 	size_t bytes_read;
 
-	float hzPerBucket = ((float)SAMPLE_RATE)/BUFFER_SAMPLES;
+	float hzPerBucket = ((float) SAMPLE_RATE) / BUFFER_SAMPLES;
 
 	ESP_LOGI("MIC_TASK", "%f", hzPerBucket);
+
+	memset(fft_buffer_previous, 0, sizeof(fft_buffer_previous));
 
 	while (1) {
 		ESP_ERROR_CHECK(
 				i2s_read(I2S_NUM_0, data, BUFFER_SAMPLES * 4, &bytes_read, 100 * portTICK_RATE_MS));
 
 		float mean = 0.0f;
-		float peak = 0.0f;
+		float max = 0.0f;
 
 		for (uint32_t i = 0; i < BUFFER_SAMPLES; i++) {
 			uint32_t msb_index = (i * 4);
@@ -99,55 +248,60 @@ void i2sMicrophoneInputTask(void *pvParameters) {
 
 			mean += value;
 
-			if(value > peak) {
-				peak = value;
+			if (value > max) {
+				max = value;
 			}
 
 			fft_buffer[(i * 2)] = value * hann_window[i];
-			fft_buffer[(i * 2) + 1] = 0.0f;//Complex portion
+			fft_buffer[(i * 2) + 1] = 0.0f; //Complex portion
 		}
 
 		mean /= BUFFER_SAMPLES;
 
+		//Remove DC Offset
 		for (uint32_t i = 0; i < BUFFER_SAMPLES; i++) {
 			fft_buffer[(i * 2)] -= mean;
 		}
 
-		ESP_LOGI("MIC_TASK", "Sample mean: %f Peak %f over %d bytes", mean, peak, bytes_read);
-
-		ESP_ERROR_CHECK(
-				dsps_fft2r_fc32(fft_buffer, BUFFER_SAMPLES));
+		ESP_ERROR_CHECK(dsps_fft2r_fc32(fft_buffer, BUFFER_SAMPLES));
 
 		ESP_ERROR_CHECK(dsps_bit_rev_fc32(fft_buffer, BUFFER_SAMPLES));
 
 		ESP_ERROR_CHECK(dsps_cplx2reC_fc32(fft_buffer, BUFFER_SAMPLES));
 
 		for (uint32_t i = 0; i < (BUFFER_SAMPLES / 2); i++) {
-			float combined = 10 * log10f(((fft_buffer[(i * 2)] * fft_buffer[(i * 2)]) + (fft_buffer[(i * 2) +1] * fft_buffer[(i * 2) +1])) / BUFFER_SAMPLES);
+			//Do the power calculation and reduce the data down into the first
+			//half of the array at the same time.
+			float combined = 10
+					* log10f(
+							((fft_buffer[(i * 2)] * fft_buffer[(i * 2)])
+									+ (fft_buffer[(i * 2) + 1]
+											* fft_buffer[(i * 2) + 1]))
+									/ BUFFER_SAMPLES);
 
 			fft_buffer[i] = combined;
 		}
 
-		mean = 0.0f;
-		peak = 0.0f;
-		float min = 0.0f;
+		//Sampling at 44kHz, 22kHz but let's take the bottom half of that to make it slightly approximate hearing & music.
+		uint16_t buckets = (BUFFER_SAMPLES / 4);
 
-		for (uint32_t i = 0; i < BUFFER_SAMPLES / 2; i++) {
-			mean += y1_cf[i];
-			if(fft_buffer[i] > peak) {
-				peak = fft_buffer[i];
-			}
-			if(fft_buffer[i] < min) {
-				min = fft_buffer[i];
-			}
+		DisplayBuffer *displayBuffer;
+
+		if (xQueueReceive(AVAILABLE_DISPLAY_BUFFER, &displayBuffer,
+		portMAX_DELAY) == pdPASS) {
+
+//			render_strand_linear(displayBuffer, buckets);
+			render_strand_center_reflected(displayBuffer, buckets);
+
+			xQueueSend(COMMITTED_DISPLAY_BUFFER, &displayBuffer, portMAX_DELAY);
+		} else {
+			ESP_LOGW("MIC_TASK", "Failed to obtain display buffer");
 		}
-
-		mean /= BUFFER_SAMPLES;
 
 //		dsps_view(fft_buffer, BUFFER_SAMPLES/2, 64, 10,  -20.0f, 0.0f, '|');
 
-		ESP_LOGI("MIC_TASK", "Mean: %f Peak: %f Min: %f", mean, peak, min);
+//		ESP_LOGI("MIC_TASK", "Mean: %f Peak: %f Min: %f Samples: %d", mean, peak, min, buckets);
 
-		vTaskDelay(1 * portTICK_PERIOD_MS);
+		vTaskDelay(1 / portTICK_PERIOD_MS);
 	}
 }
