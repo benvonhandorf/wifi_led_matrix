@@ -47,7 +47,7 @@ static const i2s_pin_config_t pin_config = {
 	.bck_io_num = 21,
 	.ws_io_num = 22,
 	.data_out_num = I2S_PIN_NO_CHANGE,
-	.data_in_num = 27 };
+	.data_in_num = 17 };
 
 #define BUFFER_SAMPLES 1024
 
@@ -220,6 +220,8 @@ void render_strand_center_reflected(DisplayBuffer *displayBuffer,
 }
 
 void i2sMicrophoneInputTask(void *pvParameters) {
+
+	ESP_LOGI("MIC_TASK", "Mic task begin");
 
 	ESP_ERROR_CHECK(i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL));
 	ESP_ERROR_CHECK(i2s_set_pin(I2S_NUM_0, &pin_config));

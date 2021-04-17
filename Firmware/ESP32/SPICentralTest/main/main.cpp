@@ -153,11 +153,11 @@ extern "C" void app_main(void) {
 	xTaskCreatePinnedToCore(displayTask, "DisplayTask", 10000, &taskParameters,
 	tskIDLE_PRIORITY + 10, &displayTaskHandle, 1);
 
-	xTaskCreate(chaserTask, "ChaserTask", 10000, &taskParameters,
-	tskIDLE_PRIORITY + 5, &chaserTaskHandle);
+//	xTaskCreate(chaserTask, "ChaserTask", 10000, &taskParameters,
+//	tskIDLE_PRIORITY + 5, &chaserTaskHandle);
 
-//	xTaskCreate(i2sMicrophoneInputTask, "MicTask", 10000, NULL,
-//	tskIDLE_PRIORITY + 5, &micTaskHandle);
+	xTaskCreate(i2sMicrophoneInputTask, "MicTask", 10000, NULL,
+	tskIDLE_PRIORITY + 5, &micTaskHandle);
 
 //	xTaskCreatePinnedToCore(matrixTask, "MatrixTask", 10000, &taskParameters,
 //	tskIDLE_PRIORITY + 10, &taskHandle, 1);
