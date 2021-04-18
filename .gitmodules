@@ -1,3 +1,9 @@
 [submodule "Firmware/ESP32/SPICentralTest/components/esp-dsp"]
 	path = Firmware/ESP32/SPICentralTest/components/esp-dsp
 	url = https://github.com/espressif/esp-dsp.git
+[submodule "Firmware/ESP32/M5StackController/components/lvgl_esp32_drivers"]
+	path = Firmware/ESP32/M5StackController/components/lvgl_esp32_drivers
+	url = https://github.com/lvgl/lvgl_esp32_drivers.git
+[submodule "Firmware/ESP32/M5StackController/components/lvgl"]
+	path = Firmware/ESP32/M5StackController/components/lvgl
+	url = https://github.com/lvgl/lvgl.git
