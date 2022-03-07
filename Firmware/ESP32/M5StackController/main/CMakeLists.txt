@@ -1,3 +1,8 @@
-idf_component_register(SRCS "hello_world_main.c"
-                    INCLUDE_DIRS ""
-                    REQUIRES data I2SMicrophoneInput)
+# Edit following two lines to set component requirements (see docs)
+set(COMPONENT_REQUIRES data I2SMicrophoneInput M5DisplayTask ChaserTask ControlTask Server nvs_flash)
+set(COMPONENT_PRIV_REQUIRES )
+
+set(COMPONENT_SRCDIRS ".")
+set(COMPONENT_ADD_INCLUDEDIRS "")
+
+register_component()
