@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "debundle": "^0.5.4"
+  }
+}

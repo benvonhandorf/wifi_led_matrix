@@ -34,30 +34,30 @@ ControlTask::~ControlTask() {
 }
 
 void ControlTask::Run() {
-	ESP_LOGI(TASK_NAME, "Running");
-
-	ESP_ERROR_CHECK(touch_pad_init());
-
-	ESP_ERROR_CHECK(touch_pad_set_voltage(TOUCH_HVOLT_2V7, TOUCH_LVOLT_0V5, TOUCH_HVOLT_ATTEN_1V));
-
-	ESP_ERROR_CHECK(touch_pad_io_init(TOUCH_PAD_A));
-	ESP_ERROR_CHECK(touch_pad_io_init(TOUCH_PAD_B));
-	ESP_ERROR_CHECK(touch_pad_io_init(TOUCH_PAD_C));
-
-	ESP_ERROR_CHECK(touch_pad_config(TOUCH_PAD_A, 0));
-
-	ESP_ERROR_CHECK(touch_pad_filter_start(TOUCHPAD_FILTER_TOUCH_PERIOD));
-
-	uint16_t touchValue, filteredValue;
-
-	while(1) {
-		vTaskDelay(100 / portTICK_PERIOD_MS);
-
-		ESP_ERROR_CHECK(touch_pad_read_raw_data(TOUCH_PAD_A, &touchValue));
-		ESP_ERROR_CHECK(touch_pad_read_filtered(TOUCH_PAD_A, &filteredValue));
-
-		ESP_LOGI(TASK_NAME, "Reading: %d - %d", touchValue, filteredValue);
-	}
+//	ESP_LOGI(TASK_NAME, "Running");
+//
+//	ESP_ERROR_CHECK(touch_pad_init());
+//
+//	ESP_ERROR_CHECK(touch_pad_set_voltage(TOUCH_HVOLT_2V7, TOUCH_LVOLT_0V5, TOUCH_HVOLT_ATTEN_1V));
+//
+//	ESP_ERROR_CHECK(touch_pad_io_init(TOUCH_PAD_A));
+//	ESP_ERROR_CHECK(touch_pad_io_init(TOUCH_PAD_B));
+//	ESP_ERROR_CHECK(touch_pad_io_init(TOUCH_PAD_C));
+//
+//	ESP_ERROR_CHECK(touch_pad_config(TOUCH_PAD_A, 0));
+//
+//	ESP_ERROR_CHECK(touch_pad_filter_read_smooth(TOUCHPAD_FILTER_TOUCH_PERIOD));
+//
+//	uint16_t touchValue, filteredValue;
+//
+//	while(1) {
+//		vTaskDelay(100 / portTICK_PERIOD_MS);
+//
+//		ESP_ERROR_CHECK(touch_pad_read_raw_data(TOUCH_PAD_A, &touchValue));
+//		ESP_ERROR_CHECK(touch_pad_read_filtered(TOUCH_PAD_A, &filteredValue));
+//
+//		ESP_LOGI(TASK_NAME, "Reading: %d - %d", touchValue, filteredValue);
+//	}
 }
 
 static ControlTask controlTaskInstance;

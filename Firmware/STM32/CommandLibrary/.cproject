@@ -69,21 +69,21 @@
 				<externalSettings containerId="DisplayDriverCommon;" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
 					<externalSetting>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/DisplayDriverCommon"/>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/DisplayDriverCommon/Debug_ARM"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/DisplayDriverCommon/Debug"/>
 						<entry flags="RESOLVED" kind="libraryFile" name="DisplayDriverCommon" srcPrefixMapping="" srcRootPath=""/>
 					</externalSetting>
 				</externalSettings>
 				<externalSettings containerId="NetworkLibrary;" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
 					<externalSetting>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/NetworkLibrary"/>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/NetworkLibrary/Debug_ARM"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/NetworkLibrary/Debug"/>
 						<entry flags="RESOLVED" kind="libraryFile" name="NetworkLibrary" srcPrefixMapping="" srcRootPath=""/>
 					</externalSetting>
 				</externalSettings>
 				<externalSettings containerId="Common;" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
 					<externalSetting>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/Common"/>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/Common/Debug_ARM"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/Common/Debug"/>
 						<entry flags="RESOLVED" kind="libraryFile" name="Common" srcPrefixMapping="" srcRootPath=""/>
 					</externalSetting>
 				</externalSettings>

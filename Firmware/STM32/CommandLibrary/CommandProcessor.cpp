@@ -30,9 +30,9 @@ void CommandProcessor::SetPixelData(Request *request, DisplayDriver *display,
 		uint8_t b = request->body[pixelStart + 2];
 		uint8_t w = request->body[pixelStart + 3];
 
-		PixelMapping::Pixel physicalPixel =
+		Pixel physicalPixel =
 				pixelMapping->mapVirtualPixelToPhysicalPixel(
-						PixelMapping::Pixel(x, y));
+						Pixel(x, y));
 
 		display->SetPixel(physicalPixel.x, physicalPixel.y, r, g, b, w);
 
@@ -45,9 +45,9 @@ void CommandProcessor::Clear(Request *request, DisplayDriver *display,
 		Configuration *configuration, PixelMapping *pixelMapping) {
 	for (uint16_t x = 0; x < configuration->getWidth(); x++) {
 		for (uint16_t y = 0; y < configuration->getHeight(); y++) {
-			PixelMapping::Pixel physicalPixel =
+			Pixel physicalPixel =
 					pixelMapping->mapVirtualPixelToPhysicalPixel(
-							PixelMapping::Pixel(x, y));
+							Pixel(x, y));
 
 			display->SetPixel(physicalPixel.x, physicalPixel.y, 0, 0, 0, 0);
 		}
@@ -66,9 +66,9 @@ void CommandProcessor::AssignPixelData(Request *request, DisplayDriver *display,
 		uint8_t b = request->body[offset + 6];
 		uint8_t w = request->body[offset + 7];
 
-		PixelMapping::Pixel physicalPixel =
+		Pixel physicalPixel =
 				pixelMapping->mapVirtualPixelToPhysicalPixel(
-						PixelMapping::Pixel(x, y));
+						Pixel(x, y));
 
 		display->SetPixel(physicalPixel.x, physicalPixel.y, r, g, b, w);
 	}

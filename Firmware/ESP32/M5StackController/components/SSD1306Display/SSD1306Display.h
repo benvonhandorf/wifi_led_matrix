@@ -1,0 +1,15 @@
+/*
+ * SSD1306Display.h
+ *
+ *  Created on: Apr 24, 2021
+ *      Author: benvh
+ */
+
+#ifndef COMPONENTS_SSD1306DISPLAY_SSD1306DISPLAY_H_
+#define COMPONENTS_SSD1306DISPLAY_SSD1306DISPLAY_H_
+
+class SSD1306Display {
+
+};
+
+#endif /* COMPONENTS_SSD1306DISPLAY_SSD1306DISPLAY_H_ */

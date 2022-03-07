@@ -8,9 +8,7 @@
 #ifndef INC_PIXELMAPPING_H_
 #define INC_PIXELMAPPING_H_
 
-class PixelMapping {
-public:
-	struct Pixel {
+struct Pixel {
 		Pixel(uint16_t x, uint16_t y) {
 			this->x = x;
 			this->y = y;
@@ -20,6 +18,8 @@ public:
 		uint16_t y;
 	};
 
+class PixelMapping {
+public:
 	virtual Pixel	mapVirtualPixelToPhysicalPixel(Pixel input) = 0;
 };
 
@@ -66,10 +66,10 @@ public:
 
 		uint16_t xOffset = (panelCount - 1) - panel * panelWidth;
 
-		PixelMapping::Pixel output {
-			.x= (uint16_t) (xOffset + input.x),
-			.y = lineOnPanel
-		};
+		Pixel output(
+			(uint16_t) (xOffset + input.x),
+			lineOnPanel
+		);
 
 		return output;
 	}
@@ -106,10 +106,9 @@ public:
 			x= xOffset + ((panelWidth -1) - input.x);
 		}
 
-		Pixel output {
-			.x= x,
-			.y = lineOnPanel
-		};
+		Pixel output( x,
+			lineOnPanel
+		);
 
 		return output;
 	}
