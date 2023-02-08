@@ -1,0 +1,241 @@
+{
+	"archive" : {},
+	"artifacts" : 
+	[
+		{
+			"path" : "CommandProcessor/libCommandProcessor.a"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"target_link_libraries",
+			"target_include_directories",
+			"target_sources"
+		],
+		"files" : 
+		[
+			"CommandProcessor/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 3,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 13,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 11,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 5,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-g"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-mcpu=cortex-m4"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-mthumb"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-mfpu=fpv4-sp-d16"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-mfloat-abi=hard"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-fdata-sections"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-ffunction-sections"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-fstack-usage"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-Wall"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-O0"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-g3"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 2,
+					"define" : "STM32F411xE"
+				},
+				{
+					"backtrace" : 2,
+					"define" : "USE_HAL_DRIVER"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 3,
+					"path" : "/home/benvh/projects/wifi_led_matrix/Firmware/STM32_Rebuild/CommandProcessor/."
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/benvh/projects/wifi_led_matrix/Firmware/STM32_Rebuild/Common/."
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/benvh/projects/wifi_led_matrix/Firmware/STM32_Rebuild/NetworkLibrary/."
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/benvh/projects/wifi_led_matrix/Firmware/STM32_Rebuild/DisplayDriverCommon/."
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				1,
+				3,
+				7
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "Common::@13b50f4fff9a3833e1fc"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "NetworkLibrary::@0a145cd16e9c1105849c"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "DisplayDriverCommon::@6d1e05a2474106102d6f"
+		}
+	],
+	"id" : "CommandProcessor::@0334b249d80ee67d5b7f",
+	"name" : "CommandProcessor",
+	"nameOnDisk" : "libCommandProcessor.a",
+	"paths" : 
+	{
+		"build" : "CommandProcessor",
+		"source" : "CommandProcessor"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Header Files",
+			"sourceIndexes" : 
+			[
+				0,
+				2,
+				4,
+				5,
+				6,
+				8
+			]
+		},
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				1,
+				3,
+				7
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 4,
+			"path" : "CommandProcessor/CommandProcessor.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 4,
+			"compileGroupIndex" : 0,
+			"path" : "CommandProcessor/CommandProcessor.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "Common/configuration.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "Common/PixelMapping.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "Common/PixelMapping.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "Common/Protocol.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "NetworkLibrary/Request.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "NetworkLibrary/Request.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "DisplayDriverCommon/DisplayDriver.hpp",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "STATIC_LIBRARY"
+}

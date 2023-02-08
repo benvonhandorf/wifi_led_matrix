@@ -1,0 +1,239 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8
+					],
+					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15.3"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						4
+					]
+				},
+				{
+					"build" : "Common",
+					"jsonFile" : "directory-Common-Debug-961c0da1854571906fb8.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15.3"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "Common",
+					"targetIndexes" : 
+					[
+						1
+					]
+				},
+				{
+					"build" : "CommandProcessor",
+					"jsonFile" : "directory-CommandProcessor-Debug-761a91c755c6641ad111.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15.3"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "CommandProcessor",
+					"targetIndexes" : 
+					[
+						0
+					]
+				},
+				{
+					"build" : "data",
+					"jsonFile" : "directory-data-Debug-6f38794c44c06cb31d42.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15.3"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "data"
+				},
+				{
+					"build" : "devices",
+					"jsonFile" : "directory-devices-Debug-cfeba7fbfc4ff4c9cc71.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15.3"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "devices",
+					"targetIndexes" : 
+					[
+						6
+					]
+				},
+				{
+					"build" : "NetworkLibrary",
+					"jsonFile" : "directory-NetworkLibrary-Debug-bbfdaf5b705680b0673c.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15.3"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "NetworkLibrary",
+					"targetIndexes" : 
+					[
+						5
+					]
+				},
+				{
+					"build" : "DisplayDriverCommon",
+					"jsonFile" : "directory-DisplayDriverCommon-Debug-ef1870dd1032b6db2de8.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15.3"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "DisplayDriverCommon",
+					"targetIndexes" : 
+					[
+						3
+					]
+				},
+				{
+					"build" : "Core",
+					"jsonFile" : "directory-Core-Debug-611b2c2e495e6cca7ce5.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15.3"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "Core",
+					"targetIndexes" : 
+					[
+						2
+					]
+				},
+				{
+					"build" : "Drivers",
+					"jsonFile" : "directory-Drivers-Debug-683725d03d8dced9f37d.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15.3"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "Drivers"
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8
+					],
+					"name" : "GraphicsDriver_STM32F411RET6",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 2,
+					"id" : "CommandProcessor::@0334b249d80ee67d5b7f",
+					"jsonFile" : "target-CommandProcessor-Debug-ee19ecf9c4aa5a35218f.json",
+					"name" : "CommandProcessor",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "Common::@13b50f4fff9a3833e1fc",
+					"jsonFile" : "target-Common-Debug-deb2f55f08afeae84180.json",
+					"name" : "Common",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 7,
+					"id" : "Core::@94795ff35dabbbd3a8ca",
+					"jsonFile" : "target-Core-Debug-7a9726fa013cc506734b.json",
+					"name" : "Core",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "DisplayDriverCommon::@6d1e05a2474106102d6f",
+					"jsonFile" : "target-DisplayDriverCommon-Debug-81a06790f8723f277b14.json",
+					"name" : "DisplayDriverCommon",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "GraphicsDriver_STM32F411RET6.elf::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-GraphicsDriver_STM32F411RET6.elf-Debug-242e5e23ed30a4699549.json",
+					"name" : "GraphicsDriver_STM32F411RET6.elf",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "NetworkLibrary::@0a145cd16e9c1105849c",
+					"jsonFile" : "target-NetworkLibrary-Debug-38bbd80e6ad05c34fad8.json",
+					"name" : "NetworkLibrary",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "devices::@0b66dd025354e08ea917",
+					"jsonFile" : "target-devices-Debug-71ca560d66386c712845.json",
+					"name" : "devices",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/benvh/projects/wifi_led_matrix/Firmware/STM32_Rebuild/build",
+		"source" : "/home/benvh/projects/wifi_led_matrix/Firmware/STM32_Rebuild"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 3
+	}
+}
