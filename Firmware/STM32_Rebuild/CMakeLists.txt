@@ -5,7 +5,7 @@ set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/arm-none-eabi-gcc.cmake)
 project(GraphicsDriver_STM32F411RET6)
 
 set(TARGET_NAME ${PROJECT_NAME}.elf)
-set(LINKER_FILE device/STM32F411RETX_FLASH.ld)
+set(LINKER_FILE ${CMAKE_SOURCE_DIR}/device/STM32F411RETX_FLASH.ld)
 
 enable_language(CXX C ASM)
 
@@ -32,7 +32,7 @@ target_sources(cpp_interface
 
 target_include_directories(cpp_interface INTERFACE inc)
 
-target_link_libraries(${TARGET_NAME} Common CommandProcessor cpp_interface data Core devices NetworkLibrary Drivers DisplayDriverCommon CompilerDefines)
+target_link_libraries(${TARGET_NAME} Common CommandProcessor cpp_interface data Core devices NetworkLibrary DisplayDriverCommon CompilerDefines)
 
 set_target_properties(${TARGET_NAME} PROPERTIES LINK_DEPENDS ${LINKER_FILE})
 

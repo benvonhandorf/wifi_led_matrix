@@ -18,5 +18,4 @@ target_sources(Core
 target_link_libraries(Core  
     PUBLIC 
         cpp_interface 
-        Drivers 
         CompilerDefines)

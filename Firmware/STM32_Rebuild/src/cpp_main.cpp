@@ -4,22 +4,22 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "DisplayDriver.h"
-#include "MatrixDriver.h"
+#include "DisplayDriver.hpp"
+#include "MatrixDriver.hpp"
 
-#include "LedSingleWire.h"
+#include "LedSingleWire.hpp"
 
 #include "image.h"
-#include "configuration.h"
-#include "PixelMapping.h"
+#include "configuration.hpp"
+#include "PixelMapping.hpp"
 
-#include "Protocol.h"
-#include "CommandProcessor.h"
+#include "Protocol.hpp"
+#include "CommandProcessor.hpp"
 
 #include <stm32f4xx_hal.h>
 
 //extern IWDG_HandleTypeDef hiwdg;
-DMA_HandleTypeDef hdma_spi1_rx;
+extern DMA_HandleTypeDef hdma_spi1_rx;
 
 extern SPI_HandleTypeDef hspi1;
 
