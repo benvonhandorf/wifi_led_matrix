@@ -18,7 +18,7 @@ public:
 	bool useStrands;
 	uint8_t strandFormat;
 
-	uint16_t elementCount;
+	uint8_t elementCount;
 	uint16_t elementWidth;
 	uint16_t elementHeight;
 

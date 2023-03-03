@@ -40,11 +40,11 @@ void performanceCountersTask(void *pvParameters) {
 
 		Atomic_Subtract_u32(&performanceCounters.packetsSent, _packetsSent);
 
-		ESP_LOGI("PERF", "%d, %d", _framesDrawn, _packetsSent);
+		ESP_LOGI("PERF", "%lu, %lu", _framesDrawn, _packetsSent);
 
-//		vTaskGetRunTimeStats(stats_buffer);
-//
-//		ESP_LOGI("PERF", "%s", stats_buffer);
+		// vTaskGetRunTimeStats(stats_buffer);
+
+		// ESP_LOGI("PERF", "%s", stats_buffer);
 
 		vTaskDelay(1000 / portTICK_PERIOD_MS);
 	}

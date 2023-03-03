@@ -5,12 +5,12 @@
  *      Author: benvh
  */
 
+#include <catch2/catch_amalgamated.hpp>
 
-#include "catch.hpp"
 #include "Protocol.h"
 #include "Request.h"
 
-TEST_CASE("Request Parsing - SetPixelData") {
+TEST_CASE("Request Parsing - SetPixelData", "Request") {
 	Request underTest;
 
 	SECTION("Only x and y - fails parsing") {

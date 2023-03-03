@@ -1,4 +1,3 @@
-#include "main.h"
 #include "../inc/cpp_main.h"
 #include <stdio.h>
 #include <string.h>
@@ -14,6 +13,8 @@
 
 #include "Protocol.h"
 #include "CommandProcessor.h"
+
+#include <stm32f4xx_hal.h>
 
 //extern IWDG_HandleTypeDef hiwdg;
 DMA_HandleTypeDef hdma_spi1_rx;

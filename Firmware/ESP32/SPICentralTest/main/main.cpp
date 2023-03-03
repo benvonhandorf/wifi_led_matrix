@@ -25,9 +25,9 @@
 
 #include "Server.h"
 
-esp_err_t event_handler(void *ctx, system_event_t *event) {
-	return ESP_OK;
-}
+// esp_err_t event_handler(void *ctx, system_event_t *event) {
+// 	return ESP_OK;
+// }
 
 #define PIN_NUM_MISO 19
 #define PIN_NUM_MOSI 23
@@ -87,6 +87,8 @@ static void gotip_handler(void* esp_netif, esp_event_base_t event_base,
 	Server::StartServer();
 }
 
+#define SIMPLE_MODE 1
+
 extern "C" void app_main(void) {
 	ESP_ERROR_CHECK(nvs_flash_init());
 	ESP_ERROR_CHECK(esp_netif_init());
@@ -130,6 +132,8 @@ extern "C" void app_main(void) {
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_config) );
 
+	ESP_LOGI("main", "Wifi Configuration: %s %s", CONFIG_ESP_WIFI_SSID, CONFIG_ESP_WIFI_PASSWORD);
+
 	ESP_ERROR_CHECK(esp_wifi_start());
 	ESP_ERROR_CHECK(esp_wifi_connect());
 
@@ -142,7 +146,7 @@ extern "C" void app_main(void) {
 
 	taskParameters.configuration = &deviceConfiguration;
 
-	xTaskHandle displayTaskHandle,
+	TaskHandle_t displayTaskHandle,
 	chaserTaskHandle, controlTaskHandle, micTaskHandle,
 			performanceMonitorHandle;
 
@@ -153,11 +157,13 @@ extern "C" void app_main(void) {
 	xTaskCreatePinnedToCore(displayTask, "DisplayTask", 10000, &taskParameters,
 	tskIDLE_PRIORITY + 10, &displayTaskHandle, 1);
 
-//	xTaskCreate(chaserTask, "ChaserTask", 10000, &taskParameters,
-//	tskIDLE_PRIORITY + 5, &chaserTaskHandle);
-
+#if SIMPLE_MODE
+	xTaskCreate(chaserTask, "ChaserTask", 10000, &taskParameters,
+	tskIDLE_PRIORITY + 5, &chaserTaskHandle);
+#else
 	xTaskCreate(i2sMicrophoneInputTask, "MicTask", 10000, NULL,
 	tskIDLE_PRIORITY + 5, &micTaskHandle);
+#endif
 
 //	xTaskCreatePinnedToCore(matrixTask, "MatrixTask", 10000, &taskParameters,
 //	tskIDLE_PRIORITY + 10, &taskHandle, 1);

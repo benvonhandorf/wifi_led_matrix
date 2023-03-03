@@ -71,7 +71,7 @@ void LedSingleWire::Open(Configuration *configuration) {
 
 //	htim3.OC_DelayElapsedCallback = ResetDelayElapsed;
 
-	HAL_TIM_Base_Start_IT(&htim1);
+	HAL_StatusTypeDef result = HAL_TIM_Base_Start_IT(&htim1);
 
 	SendStands();
 }
@@ -132,15 +132,29 @@ void LedSingleWire::SwapBuffer() {
 	SendStands();
 }
 
+uint16_t counter = 0;
+
 void LedSingleWire::SendStands() {
 	//Reset signal
 	LED_CLK_GPIO_Port->ODR = 0x00;
 
 	htim3.Instance->EGR = TIM_EGR_UG;
-	HAL_TIM_Base_Start_IT(&htim3);
+	
+	//Stop/reset the timer
+	HAL_TIM_Base_Stop_IT(&htim3);
+
+	HAL_StatusTypeDef result = HAL_TIM_Base_Start_IT(&htim3);
+
+	if(result == HAL_ERROR) {
+		//We're unable to start the reset timer.
+		counter = 0xFFFF;
+	} else {
+		counter = 0;
+	}
 }
 
 void LedSingleWire::StartNextDma() {
+	counter++;
 	//14 is 300nS
 	htim1.Instance->ARR = 30;	//17;//18
 	htim1.Instance->EGR = TIM_EGR_UG;

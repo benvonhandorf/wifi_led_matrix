@@ -109,6 +109,7 @@ void Error_Handler(void);
 #define Matrix_G1_GPIO_Port GPIOB
 #define Matrix_R1_Pin GPIO_PIN_9
 #define Matrix_R1_GPIO_Port GPIOB
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
@@ -118,5 +119,3 @@ void Error_Handler(void);
 #endif
 
 #endif /* __MAIN_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

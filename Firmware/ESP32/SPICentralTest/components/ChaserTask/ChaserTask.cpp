@@ -7,9 +7,8 @@
 
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
-#include "esp_wifi.h"
 #include "esp_system.h"
-#include "esp_event.h"
+#include "esp_random.h"
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
 
@@ -164,7 +163,7 @@ void chaserTask(void *pvParameters) {
 			ESP_LOGW("ChaserTask", "Failed to obtain display buffer");
 		}
 
-		vTaskDelay(10 / portTICK_PERIOD_MS);
+		vTaskDelay(20 / portTICK_PERIOD_MS);
 	}
 }
 

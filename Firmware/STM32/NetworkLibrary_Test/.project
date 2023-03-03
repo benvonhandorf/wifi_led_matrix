@@ -3,8 +3,9 @@
 	<name>NetworkLibrary_Test</name>
 	<comment></comment>
 	<projects>
-		<project>NetworkLibrary</project>
 		<project>Common</project>
+		<project>NetworkLibrary</project>
+		<project>TestCommon</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

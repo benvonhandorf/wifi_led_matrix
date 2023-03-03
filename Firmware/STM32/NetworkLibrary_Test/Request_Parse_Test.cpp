@@ -7,10 +7,11 @@
 
 
 
-#include "catch.hpp"
+#include <catch2/catch_amalgamated.hpp>
+
 #include "Request.h"
 
-TEST_CASE("Request Parsing - Bad inputs") {
+TEST_CASE("Request Parsing - Bad inputs", "Request") {
 	Request underTest;
 
 	SECTION("NULL data") {

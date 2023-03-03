@@ -7,6 +7,7 @@
 
 #include "I2SMicrophoneInput.h"
 #include "driver/i2s.h"
+#include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "esp_log.h"
 #include "esp_system.h"
@@ -239,7 +240,7 @@ void i2sMicrophoneInputTask(void *pvParameters) {
 
 	while (1) {
 		ESP_ERROR_CHECK(
-				i2s_read(I2S_NUM_0, data, BUFFER_SAMPLES * 4, &bytes_read, 100 * portTICK_RATE_MS));
+				i2s_read(I2S_NUM_0, data, BUFFER_SAMPLES * 4, &bytes_read, 100 * portTICK_PERIOD_MS));
 
 		float mean = 0.0f;
 		float max = 0.0f;

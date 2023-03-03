@@ -6,9 +6,7 @@
  */
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
-#include "esp_wifi.h"
 #include "esp_system.h"
-#include "esp_event.h"
 #include "driver/gpio.h"
 #include "driver/touch_pad.h"
 #include "driver/touch_sensor.h"

@@ -1,0 +1,9 @@
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/devices/src/LedSingleWire.cpp:23:6:void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef*)	16	static
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/DisplayDriverCommon/DisplayDriver.h:14:7:constexpr DisplayDriver::DisplayDriver()	16	static
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/devices/src/LedSingleWire.cpp:27:1:LedSingleWire::LedSingleWire()	16	static
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/devices/src/LedSingleWire.cpp:31:6:virtual void LedSingleWire::Open(Configuration*)	48	static
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/devices/src/LedSingleWire.cpp:79:6:virtual void LedSingleWire::Close()	16	static
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/devices/src/LedSingleWire.cpp:83:6:virtual void LedSingleWire::SetPixel(uint16_t, uint16_t, uint8_t, uint8_t, uint8_t, uint8_t)	40	static
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/devices/src/LedSingleWire.cpp:131:6:virtual void LedSingleWire::SwapBuffer()	16	static
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/devices/src/LedSingleWire.cpp:135:6:void LedSingleWire::SendStands()	16	static
+/home/benvh/projects/wifi_led_matrix/Firmware/STM32/devices/src/LedSingleWire.cpp:143:6:void LedSingleWire::StartNextDma()	16	static

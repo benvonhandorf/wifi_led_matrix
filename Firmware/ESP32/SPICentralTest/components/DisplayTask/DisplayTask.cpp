@@ -71,12 +71,12 @@ void DisplayTask::Initialize(Configuration *configuration,
 
 	for (int i = 0; i < DISPLAY_BUFFERS; i++) {
 		DisplayBuffer *displayBuffer = &(displayBuffers[i]);
-		displayBuffer->width = 300;
-		displayBuffer->height = 1;
+		displayBuffer->width = configuration->width;
+		displayBuffer->height = configuration->height;
 
 		displayBuffer->buffer = (uint8_t*) malloc(bufferSize);
 
-		ESP_LOGI("DisplayTask", "Adding buffer: %x", (uint32_t) displayBuffer);
+		ESP_LOGI("DisplayTask", "Adding buffer: %lx", (uint32_t) displayBuffer);
 
 		xQueueSend(AVAILABLE_DISPLAY_BUFFER, &displayBuffer, portMAX_DELAY);
 	}

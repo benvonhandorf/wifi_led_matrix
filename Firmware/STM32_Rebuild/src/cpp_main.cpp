@@ -48,15 +48,18 @@ void readConfiguration() {
 		configuration.elementWidth = PANEL_WIDTH;
 		configuration.elementHeight = PANEL_HEIGHT;
 		configuration.elementCount = 2;
+		
+		configuration.pixelConfiguration =
+			Configuration::PixelConfiguration::SnakeStartBottomRight;
 	} else if (configuration.useStrands) {
 		configuration.strandFormat = LedSingleWire::GRBW;
 		configuration.elementWidth = 300;
 		configuration.elementHeight = 1;
 		configuration.elementCount = 1;
-	}
 
-	configuration.pixelConfiguration =
-			Configuration::PixelConfiguration::SnakeStartBottomRight;
+		configuration.pixelConfiguration =
+			Configuration::PixelConfiguration::Simple;
+	}
 }
 
 void configure() {
@@ -123,7 +126,9 @@ void commit() {
 //2 - advancing pixel
 //3 - image
 //4 - Debugging
-//#define DRAW 3
+//5 - Simulate receive
+//6 - Repeating pattern
+//#define DRAW 6
 
 Request request;
 CommandProcessor commandProcessor;
@@ -236,6 +241,11 @@ extern "C" int cpp_main(void) {
 
 	configure();
 
+	sprintf((char*) stringBuffer, "Configuration: %lu %lu\n", configuration.getWidth(), configuration.getHeight());
+
+	HAL_UART_Transmit(&huart1, stringBuffer, strlen((char*) stringBuffer),
+		500);
+
 	open();
 
 	HAL_NVIC_EnableIRQ(SPI1_IRQn);
@@ -294,6 +304,36 @@ extern "C" int cpp_main(void) {
 	input.bodyLength = 0;
 
 	commandProcessor.ProcessRequest(&input, display);
+
+#elif DRAW == 6
+
+	uint8_t source[] = { 
+			0x00, 0x00, 0x00, 0x00,
+			0xFF, 0x00, 0x00, 0x00,
+			0x00, 0xFF, 0x00, 0x00,
+			0x00, 0x00, 0xFF, 0x00,
+			0x00, 0x00, 0x00, 0xFF,
+			 };
+	uint16_t source_length = sizeof(source);
+
+	for (uint16_t col = 0; col < configuration.getWidth(); col++) {
+
+		for (uint16_t row = 0; row < configuration.getHeight(); row++) {
+			uint16_t pixel_position = (row * configuration.getWidth()) + col + pos;
+
+			uint8_t r =
+					source[((pixel_position * 4) + 0) % source_length];
+			uint8_t g =
+					source[((pixel_position * 4) + 1) % source_length];
+			uint8_t b =
+					source[((pixel_position * 4) + 2) % source_length];
+			uint8_t w =
+					source[((pixel_position * 4) + 3) % source_length];
+
+			draw(Pixel(col, row), r, g, b, w);
+		}
+	}
+
 #endif
 
 	lastUpdate = HAL_GetTick();
@@ -327,7 +367,7 @@ extern "C" int cpp_main(void) {
 //					HAL_UART_Transmit(&huart1, stringBuffer, strlen((char*) stringBuffer),
 //							100);
 				} else {
-					systemStatus.invalidCommands++;
+					systemStatus.commands++;
 
 					commandProcessor.ProcessRequest(&request, display,
 							&configuration, pixelMapping);
@@ -365,7 +405,7 @@ extern "C" int cpp_main(void) {
 
 	commit();
 
-//		HAL_Delay(5);
+	HAL_Delay(5);
 
 #elif DRAW == 2
 		//pos 64:
@@ -386,7 +426,7 @@ extern "C" int cpp_main(void) {
 						row == (pos / 64) + 2 && col == (pos % 64) ? 255 : 0;
 
 				if (r > 0 || g > 0 || b > 0) {
-					draw(PixelMapping::Pixel(col, row), r, g, b, 0);
+					draw(Pixel(col, row), r, g, b, 0);
 				}
 			}
 		}
@@ -456,6 +496,46 @@ extern "C" int cpp_main(void) {
 //		commit();
 //
 //		HAL_Delay(10);
+
+#elif DRAW == 6
+
+	duration = HAL_GetTick() - lastUpdate;
+
+	if(duration > 1000) {
+		pos++;
+
+		lastUpdate = HAL_GetTick();
+
+		uint8_t source[] = { 
+				0x00, 0x00, 0x00, 0x00,
+				0xFF, 0x00, 0x00, 0x00,
+				0x00, 0xFF, 0x00, 0x00,
+				0x00, 0x00, 0xFF, 0x00,
+				0x00, 0x00, 0x00, 0xFF,
+				};
+		uint16_t source_length = sizeof(source);
+
+		for (uint16_t col = 0; col < configuration.getWidth(); col++) {
+
+			for (uint16_t row = 0; row < configuration.getHeight(); row++) {
+				uint16_t pixel_position = (row * configuration.getWidth()) + col + pos;
+
+				uint8_t r =
+						source[((pixel_position * 4) + 0) % source_length];
+				uint8_t g =
+						source[((pixel_position * 4) + 1) % source_length];
+				uint8_t b =
+						source[((pixel_position * 4) + 2) % source_length];
+				uint8_t w =
+						source[((pixel_position * 4) + 3) % source_length];
+
+				draw(Pixel(col, row), r, g, b, w);
+			}
+		}
+
+		commit();
+	}
+
 #endif
 	}
 }

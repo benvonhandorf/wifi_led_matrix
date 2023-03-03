@@ -6,16 +6,16 @@
     "configurations": [
         {
             "cwd": "${workspaceRoot}",
-            "executable": "./build/encoder-prototype-firmware.elf",
+            "executable": "./build/GraphicsDriver_STM32F411RET6.elf",
             "name": "Debug (JLink)",
             "request": "launch",
             "type": "cortex-debug",
-            "servertype": "jlink",
-            "device": "ATSAMD10D13AM",
+            "servertype": "stutil",
+            "device": "stm32f411re",
             "interface": "swd",
             "serialNumber": "", // add J-Link serial number if having multiple attached the same time.
             "runToEntryPoint": "main",
-            "svdFile": "${workspaceRoot}/device/ATSAMD10D13AM.svd",
+            "svdFile": "${workspaceRoot}/device/STM32F411.svd",
             "preLaunchTask": "${defaultBuildTask}"
         }
     ]
