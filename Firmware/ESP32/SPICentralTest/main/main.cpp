@@ -68,13 +68,38 @@ void initializeSpi() {
 
 static void disconnect_handler(void* esp_netif, esp_event_base_t event_base,
                                int32_t event_id, void* event_data) {
-	ESP_LOGI("MAIN", "Disconnected");
+
+	wifi_event_sta_disconnected_t *event = (wifi_event_sta_disconnected_t *) event_data;
+
+	//Event reason definitions: esp_wifi_types.h -> wifi_err_reason_t
+	ESP_LOGI("MAIN", "Wifi: Disconnected: %d", event->reason);
+
+	ESP_ERROR_CHECK(esp_wifi_connect());
 }
 
 static void connect_handler(void* esp_netif, esp_event_base_t event_base,
                             int32_t event_id, void* event_data) {
 
-	ESP_LOGI("MAIN", "Connected");
+	ESP_LOGI("MAIN", "Wifi: Connected");
+}
+
+static void scan_completed(void* esp_netif, esp_event_base_t event_base,
+                            int32_t event_id, void* event_data) {
+
+	wifi_ap_record_t record[10];
+	uint16_t records = 10;
+
+	esp_wifi_scan_get_ap_records(&records, record);
+
+	ESP_LOGI("MAIN", "Scan: %d", records);
+
+	if(records < 100) {
+		for(uint16_t i = 0 ; i < records; i++) {
+			ESP_LOGI("MAIN", "Scan: %s RSSI: %d Primary: %d Authmode: %d", record[i].ssid, record[i].rssi, record[i].primary, record[i].authmode);
+		}
+	}
+
+	esp_wifi_scan_stop();
 }
 
 static void gotip_handler(void* esp_netif, esp_event_base_t event_base,
@@ -95,6 +120,11 @@ extern "C" void app_main(void) {
 
 	ESP_ERROR_CHECK(esp_event_loop_create_default());
 
+	esp_log_level_set("", ESP_LOG_ERROR);
+	esp_log_level_set("wifi", ESP_LOG_VERBOSE);
+
+	esp_netif_create_default_wifi_sta();
+
 	ESP_ERROR_CHECK(
 			esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
 					&gotip_handler, NULL));
@@ -107,34 +137,38 @@ extern "C" void app_main(void) {
 			esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED,
 					&disconnect_handler, NULL));
 
-	esp_netif_create_default_wifi_sta();
+	ESP_ERROR_CHECK(
+			esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_SCAN_DONE,
+					&scan_completed, NULL));
 
 	wifi_init_config_t cfg =
 				WIFI_INIT_CONFIG_DEFAULT() ;
+
+	cfg.nvs_enable = 0;
 
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
 	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
 	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
 
-    wifi_config_t sta_config ;
-    sta_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
-    sta_config.sta.pmf_cfg.capable = true;
-    sta_config.sta.pmf_cfg.required = false;
-
-	strncpy((char *)sta_config.sta.ssid, CONFIG_ESP_WIFI_SSID, 32);
-	strncpy((char *)sta_config.sta.password, CONFIG_ESP_WIFI_PASSWORD, 64);
-//	sta_config.sta.bssid_set = false;
-//
-//	sta_config.sta.pmf_cfg.capable = false;
-//	sta_config.sta.pmf_cfg.required = false;
+	wifi_config_t sta_config = {
+		
+        .sta = {
+            .ssid = CONFIG_ESP_WIFI_SSID,
+            .password = CONFIG_ESP_WIFI_PASSWORD,
+            .sae_pwe_h2e = WPA3_SAE_PWE_BOTH,
+        },
+    };
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_config) );
 
-	ESP_LOGI("main", "Wifi Configuration: %s %s", CONFIG_ESP_WIFI_SSID, CONFIG_ESP_WIFI_PASSWORD);
-
 	ESP_ERROR_CHECK(esp_wifi_start());
+
+	// wifi_scan_config_t scan_config;
+	// memset(&scan_config, 0, sizeof(wifi_scan_config_t));
+	// ESP_ERROR_CHECK(esp_wifi_scan_start(&scan_config, true));
+
 	ESP_ERROR_CHECK(esp_wifi_connect());
 
 	ESP_LOGI("main", "Before task creation");
