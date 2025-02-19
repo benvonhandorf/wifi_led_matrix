@@ -71,7 +71,7 @@ void random_rgb_uint8_t(uint8_t *rgb) {
 
 void random_rgbw_uint8_t(uint8_t *rgbw) {
 	random_rgb_uint8_t(rgbw);
-	rgbw[4] = 0;
+	rgbw[3] = 0;
 }
 
 #endif /* MAIN_COLORS_H_ */

@@ -10,10 +10,14 @@
 
 class Server {
 public:
-	static void StartServer();
+	void StartServer(CommandInterface *itf);
+
+	esp_err_t particle_handler(httpd_req_t* req);
+	esp_err_t state_handler(httpd_req_t* req);
+	esp_err_t color_handler(httpd_req_t* req);
 
 private:
-
+	CommandInterface *interface_;
 };
 
 #endif /* COMPONENTS_SERVER_SERVER_H_ */

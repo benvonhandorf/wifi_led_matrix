@@ -40,7 +40,9 @@ void performanceCountersTask(void *pvParameters) {
 
 		Atomic_Subtract_u32(&performanceCounters.packetsSent, _packetsSent);
 
-		ESP_LOGI("PERF", "%lu, %lu", _framesDrawn, _packetsSent);
+		if(_framesDrawn != 50 || _packetsSent != 100) {
+			ESP_LOGI("PERF", "Frames: %lu, Packets: %lu", _framesDrawn, _packetsSent);
+		}
 
 		// vTaskGetRunTimeStats(stats_buffer);
 

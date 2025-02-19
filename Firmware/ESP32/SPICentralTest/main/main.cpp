@@ -15,6 +15,8 @@
 #include "TaskParameters.h"
 #include "DisplayTask.h"
 
+#include "CommandInterface.h"
+
 //#include "MatrixTask.h"
 #include "ChaserTask.h"
 #include "ControlTask.h"
@@ -23,7 +25,7 @@
 
 #include "esp_netif_ip_addr.h"
 
-#include "Server.h"
+#include "ServerExternal.h"
 
 // esp_err_t event_handler(void *ctx, system_event_t *event) {
 // 	return ESP_OK;
@@ -37,6 +39,8 @@
 struct TaskParameters taskParameters;
 
 static Configuration deviceConfiguration;
+
+static ChaserState chaser_state;
 
 void initializeSpi() {
 	esp_err_t ret;
@@ -109,7 +113,7 @@ static void gotip_handler(void* esp_netif, esp_event_base_t event_base,
 
 	ESP_LOGI("MAIN", "Got IP:" IPSTR, IP2STR(&event->ip_info.ip));
 
-	Server::StartServer();
+	start_http_server((CommandInterface *) &chaser_state);
 }
 
 #define SIMPLE_MODE 1
@@ -179,6 +183,8 @@ extern "C" void app_main(void) {
 	deviceConfiguration.width = 300;
 
 	taskParameters.configuration = &deviceConfiguration;
+
+	taskParameters.user_ctx = (void *) &chaser_state;
 
 	TaskHandle_t displayTaskHandle,
 	chaserTaskHandle, controlTaskHandle, micTaskHandle,

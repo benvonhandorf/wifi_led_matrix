@@ -11,7 +11,9 @@
     "idf.pythonBinPath": "/home/benvh/.espressif/python_env/idf5.0_py3.10_env/bin/python",
     "idf.toolsPath": "/home/benvh/.espressif",
     "files.associations": {
-        "regex": "cpp"
+        "regex": "cpp",
+        "*.tcc": "cpp",
+        "functional": "cpp"
     },
     "idf.port": "/dev/ttyESP32DEV",
     "idf.flashType": "UART"

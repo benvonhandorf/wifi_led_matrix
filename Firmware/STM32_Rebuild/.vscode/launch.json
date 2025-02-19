@@ -7,8 +7,22 @@
         {
             "cwd": "${workspaceRoot}",
             "executable": "./build/GraphicsDriver_STM32F411RET6.elf",
-            "name": "Debug (JLink)",
+            "name": "Debug (STLink)",
             "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "stutil",
+            "device": "stm32f411re",
+            "interface": "swd",
+            "serialNumber": "", // add J-Link serial number if having multiple attached the same time.
+            "runToEntryPoint": "main",
+            "svdFile": "${workspaceRoot}/device/STM32F411.svd",
+            "preLaunchTask": "${defaultBuildTask}"
+        },
+        {
+            "cwd": "${workspaceRoot}",
+            "executable": "./build/GraphicsDriver_STM32F411RET6.elf",
+            "name": "Attach (STLink)",
+            "request": "attach",
             "type": "cortex-debug",
             "servertype": "stutil",
             "device": "stm32f411re",

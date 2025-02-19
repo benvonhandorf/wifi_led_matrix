@@ -10,11 +10,19 @@
 
 void controlTask(void *pvParameters);
 
+enum ControlMode {
+	Chaser,
+};
+
 class ControlTask {
 public:
 	ControlTask();
 	virtual ~ControlTask();
 	void Run();
+
+private:
+	ControlMode currentMode;
+
 };
 
 #endif /* MAIN_CONTROLTASK_H_ */

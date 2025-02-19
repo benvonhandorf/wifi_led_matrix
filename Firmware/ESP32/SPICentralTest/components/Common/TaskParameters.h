@@ -9,6 +9,7 @@ struct TaskParameters {
 	spi_device_handle_t spiDevice;
 
 	Configuration *configuration;
+	void *user_ctx;
 };
 
 #endif
